@@ -1,0 +1,48 @@
+code,description
+L1007-R1,1. A Practical Introduction to Container Security (3rd Ed.)
+L1007-R2,2. A Practical Introduction to Container Security (3rd Ed.)
+L1009,First time hands-on with Red Hat OpenStack Platform
+L1010,Hands on with Red Hat OpenStack Platform director
+L1011,DevOps with OpenShift and Ansible
+L1012,Hands-on with Istio on OpenShift
+L1013,Getting Started with Cloud Native Apps
+L1017-R1,1. From source to RPM in 120 minutes
+L1017-R2,2. From source to RPM in 120 minutes
+L1017-R3,3. From source to RPM in 120 minutes
+L1018,Understanding Containerized Red Hat OpenStack Platform
+L1019,OpenShift + RHSSO = happy security teams and happy users
+L1020,Deploy a containerized HCI IaaS with OpenStack and Ceph
+L1023-R1,1. Hands on with Satellite 6
+L1023-R2,2. Hands on with Satellite 6
+L1023-R3,3. Hands on with Satellite 6
+L1024-R1,1. The Definitive Red Hat Enterprise Linux 7 Hands-On Lab
+L1024-R2,2. The Definitive Red Hat Enterprise Linux 7 Hands-On Lab
+L1024-R3,3. The Definitive Red Hat Enterprise Linux 7 Hands-On Lab
+L1034-R1,1. Implementing Proactive Security and Compliance Automation
+L1034-R2,2.Implementing Proactive Security and Compliance Automation
+L1036,Defend Yourself Using Built-in RHEL Security Technologies
+L1044,Red Hat Integrated Management Technologies Lab
+L1055,Up and Running with Red Hat Identity Management
+L1056,Optimize your IT. VM migration made easy with Red Hat.
+L1059,Hands on with OpenStack and OpenDaylight SDN
+L1061,Effectively monitor and troubleshoot your OCP Cluster
+L1070,Adding Intelligence to Event Processing Apps
+L1071,Building a RHEL gold image for Azure
+L1074,Upgrade your developer powers with Kubernetes and OpenShift
+L1077,Building a Self-Service Portal with CloudForms
+L1078,CloudForms with Ansible - Better together!
+L1086-R1,1. Getting Started with Ansible
+L1086-R2,2. Getting Started with Ansible
+L1086-R3,3. Getting Started with Ansible
+L1087,Getting Started with Red Hat Ansible Tower
+L1093,Hands-on introduction to Red Hat CloudForms
+L1096,Mastering Serverless PaaS with OpenShift
+L1099,Running data streaming applications with Kafka on OpenShift
+L1106-R1,1. Practical OpenSCAP
+L1106-R2,2. Practical OpenSCAP
+L1107,Custom Broker for your Service Catalog
+L1108-R1,1. Containerizing applications/existing and new
+L1108-R2,2. Containerizing applications/existing and new
+L1108-R3,3. Containerizing applications/existing and new
+L1120,iPaaS hack-a-thon: Build a cool integrated app
+L1122,Develop IoT solutions with containers and serverless patterns
