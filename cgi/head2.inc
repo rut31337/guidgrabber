@@ -1,6 +1,6 @@
 <html>
 
-<link type="text/css" rel="stylesheet" href="/guidgrabber/gg.css" media="all">
-<link rel="shortcut icon" href="/guidgrabber/favicon.ico" type="image/x-icon">
-<title>Red Hat Summit 2018 Lab GUID Assignment</title>
+<link type="text/css" rel="stylesheet" href="/gg/gg.css" media="all">
+<link rel="shortcut icon" href="/gg/favicon.ico" type="image/x-icon">
+<title>Lab GUID Assignment</title>
 

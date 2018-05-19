@@ -17,8 +17,9 @@ from time import sleep
 
 
 ggetc = "/var/www/guidgrabber/etc/"
+ggHtmlRoot = "/gg"
 labcsv = ggetc + "labconfig.csv"
-myurl = "/guidgrabber/guidgrabber.cgi"
+myurl = "/gg/guidgrabber.cgi"
 sslVerify = True
 
 def printback():
@@ -165,7 +166,7 @@ if operation == "requestguid":
     print '<tr><td><p style="color: black; font-size: 0.9em;">If you are unsure which one to choose or what the activation key is please notify a lab proctor.</p><br></td></tr>'
   print '</table></center>'
   if foundlabs:
-    print '<script type="text/javascript" src="/guidgrabber/ipgrabber.js"></script>'
+    print '<script type="text/javascript" src="' + ggHtmlRoot + '/ipgrabber.js"></script>'
   printfooter(operation)
 elif operation == "reset":
   redirectURL=myurl

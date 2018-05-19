@@ -7,7 +7,7 @@ import os
 
 ggetc = "/var/www/guidgrabber/etc/"
 labcsv = ggetc + "labconfig.csv"
-myurl = "/guidgrabber/manager.cgi"
+myurl = "/gg/manager.cgi"
 
 def printback():
   print '<br><button onclick="goBack()">< Go Back</button>'
@@ -26,7 +26,7 @@ def printheader(operation="requestguid"):
   print '<html><head>'
   if operation == "manage":
     waittime = 30
-    redirectURL = "/guidgrabber/manager.cgi?operation=manage&labcode=%s" % labCode
+    redirectURL = "/gg/manager.cgi?operation=manage&labcode=%s" % labCode
     print '<meta http-equiv="refresh" content="%s;url=%s" />' % (waittime, redirectURL)
     includehtml('head_mgr.inc')
   elif operation == "showguid":
@@ -62,7 +62,7 @@ if operation == "requestguid":
   if 'msg' in form:
     print '<tr><td><p style="color: black; font-size: 1.2em;">' + form.getvalue('msg') + "</p></td></tr>"
   print '<tr><td><p style="color: black; font-size: 1.2em;">Please choose the lab code you wish to manage:</p></td></tr>'
-  print "<tr><td><form method='post' action='/guidgrabber/manager.cgi?operation=checklc'>"
+  print '<tr><td><form method="post" action="/gg/manager.cgi?operation=checklc">'
   print "<table border=0><tr><td><b>Lab Code:</b></td><td><select name='labcode'>"
   with open(labcsv) as csvfile:
     labcodes = csv.DictReader(csvfile)
@@ -97,7 +97,7 @@ if operation == "checklc":
     printfooter()
     exit()
   printheader()
-  redirectURL = "/guidgrabber/manager.cgi?operation=manage&labcode=%s" % labCode
+  redirectURL = "/gg/manager.cgi?operation=manage&labcode=%s" % labCode
   callredirect(redirectURL, waittime=0)
   printfooter()
   exit()

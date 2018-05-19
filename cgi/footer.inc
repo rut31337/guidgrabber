@@ -8,7 +8,7 @@
                   <div class="summit-image-embed">
                       <div class="summit-image-embed-container">
                               
-        <div class="media media-element-container media-default"><img class="media-element file-default summit-image-embed-img" alt="Red Hat Shadowman logo" title="redhat.com" src="https://www.redhat.com/cms/managed-files/shadowman-logo.png" width="138" height="44"></div>
+        <div class="media media-element-container media-default"><img class="media-element file-default summit-image-embed-img" alt="Red Hat Shadowman logo" title="redhat.com" src="/gg/images/shadowman-logo.png" width="138" height="44"></div>
                           </a>
                       </div>
                   </div>
@@ -28,7 +28,7 @@
                           <div class="summit-image-embed" data-summit-align="center" data-summit-max-height="footer">
                               <div class="summit-image-embed-container">
                                       
-        <div class="media media-element-container media-default"><img class="media-element file-default summit-image-embed-img" alt="Summit logo" title="Red Hat Summit" src="https://www.redhat.com/cms/managed-files/summit-logo-74x35.png" width="74" height="35"></div>
+        <!--<div class="media media-element-container media-default"><img class="media-element file-default summit-image-embed-img" alt="Summit logo" title="Red Hat Summit" src="https://www.redhat.com/cms/managed-files/summit-logo-74x35.png" width="74" height="35"></div>-->
                                   </a>
                               </div>
                           </div>

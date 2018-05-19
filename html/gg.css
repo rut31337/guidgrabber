@@ -10958,7 +10958,8 @@ img.mfp-img {
 
 @media (min-width: 992px) {
   .header-background-image {
-    background-image: url("https://www.redhat.com/files/websummit/img/bandbg/summit-2018-supporting-hero-2000x628_about.jpg");
+    /* background-image: url("https://www.redhat.com/files/websummit/img/bandbg/summit-2018-supporting-hero-2000x628_about.jpg"); */
+    background-image: url("/gg/images/bk.png");
     background-repeat: no-repeat;
   }
 }

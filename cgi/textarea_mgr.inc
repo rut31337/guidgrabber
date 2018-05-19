@@ -2,7 +2,7 @@
    <section class="summit-band" data-summit-band-background="transparent" data-summit-theme="dark" data-summit-band-type="hero2018">
       <div class="summit-band-container" data-summit-layout="8 4">
          <header class="summit-band-header">
-                <h1 class="summit-band-header-title">Red Hat Summit Lab Manager</h1>
+                <h1 class="summit-band-header-title">Lab Manager</h1>
             </header>
         </div>
     </section>
