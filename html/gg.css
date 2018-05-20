@@ -974,7 +974,7 @@ default--band adds basic top & bottom padding, as well as a default white backgr
 }
 
 [data-summit-band-collapse="both"].summit-band, [data-summit-band-collapse="both"].summit-header {
-  padding-top: 0.8333333333em;
+  padding-top: 0.8333333333em; 
   padding-bottom: 0.8333333333em;
 }
 
@@ -3090,12 +3090,12 @@ body.page-node-add, body.page-node-edit {
 }
 
 .summit-band[data-summit-band-type="hero2018"] {
-  margin-top: 50px;
+  /*margin-top: 50px; */
 }
 
 @media (min-width: 768px) {
   .summit-band[data-summit-band-type="hero2018"] {
-    margin-top: 80px;
+    /* margin-top: 80px; */
   }
 }
 
@@ -10944,14 +10944,16 @@ img.mfp-img {
 
 @media (max-width: 991px) {
   .header-background-image {
-    background-image: url("https://www.redhat.com/files/websummit/img/bandbg/summit-2018-supporting-hero-600x800_about.jpg");
+    /* background-image: url("https://www.redhat.com/files/websummit/img/bandbg/summit-2018-supporting-hero-600x800_about.jpg"); */
+    background-image: url("/gg/images/bk.png");
     background-repeat: no-repeat;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1199px) {
   .header-background-image {
-    background-image: url("https://www.redhat.com/files/websummit/img/bandbg/summit-2018-supporting-hero-1000x628_about.jpg");
+    /* background-image: url("https://www.redhat.com/files/websummit/img/bandbg/summit-2018-supporting-hero-1000x628_about.jpg") */
+    background-image: url("/gg/images/bk.png");
     background-repeat: no-repeat;
   }
 }
