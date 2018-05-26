@@ -5,9 +5,6 @@ import cgi
 import urllib
 import os
 
-ggetc = "/var/www/guidgrabber/etc/"
-labcsv = ggetc + "labconfig.csv"
-myurl = "/gg/manager.cgi"
 
 def printback():
   print '<br><button onclick="goBack()">< Go Back</button>'
@@ -51,6 +48,18 @@ def printfooter(operation="requestguid"):
   exit()
 
 form = cgi.FieldStorage()
+if 'profile' in form:
+  profile = form.getvalue('profile')
+else:
+  printheader()
+  print "ERROR: No profile specified."
+  printfooter()
+  exit()
+
+ggetc = "/var/www/guidgrabber/etc/"
+labcsv = ggetc + profile + "-labconfig.csv"
+myurl = "/gg/manager.cgi"
+
 if 'operation' in form:
   operation = form.getvalue('operation')
 else:
@@ -116,8 +125,8 @@ if operation == "manage":
   maxrow = 10
   print "<center><table border=1>"
 
-  allguidscsv = ggetc + "availableguids-" + labCode + ".csv"
-  assignedcsv = ggetc + "assignedguids-" + labCode + ".csv"
+  allguidscsv = ggetc + profile + "-availableguids-" + labCode + ".csv"
+  assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
   if not os.path.exists(allguidscsv):
     msg=urllib.quote("ERROR, No guids for lab code <b>{0}</b> exist.".format(labCode))
     redirectURL="%s?msg=%s" % (myurl,msg)
