@@ -15,13 +15,6 @@ from random import randint
 import time
 from time import sleep
 
-
-ggetc = "/var/www/guidgrabber/etc/"
-ggHtmlRoot = "/gg"
-labcsv = ggetc + "labconfig.csv"
-myurl = "/gg/guidgrabber.cgi"
-sslVerify = True
-
 def printback():
   print '<br><button onclick="goBack()">< Go Back</button>'
 
@@ -110,6 +103,25 @@ def apicall(token, url, op, inp = None ):
     return obj.get('resources')
 
 form = cgi.FieldStorage()
+if 'profile' in form:
+  profile = form.getvalue('profile')
+else:
+  printheader()
+  print "ERROR: No profile specified."
+  printfooter()
+  exit()
+
+myurl = "/gg/gg.cgi"
+ggHtmlRoot = "/gg"
+sslVerify = True
+ggetc = "/var/www/guidgrabber/etc/"
+labcsv = ggetc + profile + "-labconfig.csv"
+if not os.path.isfile(labcsv):
+  printheader()
+  print "Sorry, labs for this session are not yet available.  Please try again later."
+  printfooter()
+  exit()
+
 if 'operation' in form:
   operation = form.getvalue('operation')
 else:
@@ -133,34 +145,37 @@ if operation == "requestguid":
     except:
       cappID = ""
     if cguid != "" and clabCode != "" and cappID != "":
-      redirectURL="%s?operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,cguid,clabCode,cappID)
+      redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,cguid,clabCode,cappID)
       printheader(True, redirectURL, "0", operation)
       exit()
-  printheader()
-  print "<center><table>"
-  if 'msg' in form:
-    print '<tr><td><p style="color: black; font-size: 1.2em;">' + form.getvalue('msg') + "</p></td></tr><tr><td>&nbsp;</td></tr>"
-  print '<tr><td><p style="color: black; font-size: 1.2em;">Please choose the lab code for this session (Reload this page if you do not see the option for this lab session in the below dropdown.):</p></td></tr>'
-
-  print "<tr><td><form method='post' action='%s?operation=searchguid'>" % myurl
-  print "<table border=0><tr><td><b>Lab Code:</b></td><td><select name='labcode'>"
   foundlabs = False
+  fl = {}
   with open(labcsv) as csvfile:
     labcodes = csv.DictReader(csvfile)
     for row in labcodes:
       if row['code'].startswith("#"):
         continue
-      gt = ggetc + "availableguids-" + row['code'] + ".csv"
+      gt = ggetc + profile + "-availableguids-" + row['code'] + ".csv"
       if os.path.exists(gt):
         foundlabs = True
-        print('<option value="{0}">{0} - {1}</option>'.format(row['code'],row['description']))
-  print "</select></td></tr>"
+        fl[row['code']] = row['description']
+  printheader()
   if not foundlabs:
     print "<tr><td><center><b>Sorry, the lab sessions are not yet available.</b></center></td></tr>"
   else:
+    print "<center><table>"
+    if 'msg' in form:
+      print '<tr><td><p style="color: black; font-size: 1.2em;">' + form.getvalue('msg') + "</p></td></tr><tr><td>&nbsp;</td></tr>"
+    print '<tr><td><p style="color: black; font-size: 1.2em;">Please choose the lab code for this session (Reload this page if you do not see the option for this lab session in the below dropdown.):</p></td></tr>'
+    print "<tr><td><form method='post' action='%s?operation=searchguid'>" % myurl
+    print "<table border=0><tr><td><b>Lab Code:</b></td><td><select name='labcode'>"
+    for k in fl:
+      print('<option value="{0}">{0} - {1}</option>'.format(k,fl[k]))
+    print "</select></td></tr>"
     print "<tr><td><b>Activation Key:</b></td><td><input type='text' name='actkey'></td></tr>"
     print '<tr><td colspan=2 align=center><input type="submit" value="Next&nbsp;>"></td></tr></table>'
     print '<input type="hidden" id="ipaddr" name="ipaddr" />'
+    print '<input type="hidden" id="profile" name="profile" value="%s" />' % profile
   print "</form></td></tr>"
   if foundlabs:
     print '<tr><td><p style="color: black; font-size: 0.9em;">If you are unsure which one to choose or what the activation key is please notify a lab proctor.</p><br></td></tr>'
@@ -169,7 +184,7 @@ if operation == "requestguid":
     print '<script type="text/javascript" src="' + ggHtmlRoot + '/ipgrabber.js"></script>'
   printfooter(operation)
 elif operation == "reset":
-  redirectURL=myurl
+  redirectURL=myurl + "?profile=" + profile
   printheader(True, redirectURL, "0", operation)
   exit()
 elif operation == "searchguid":
@@ -186,13 +201,13 @@ elif operation == "searchguid":
     printfooter()
     exit ()
   labCode = form.getvalue('labcode')
-  allguidscsv = ggetc + "availableguids-" + labCode + ".csv"
+  allguidscsv = ggetc + profile + "-availableguids-" + labCode + ".csv"
   if not os.path.exists(allguidscsv):
     msg=urllib.quote("ERROR, No guids for lab code <b>{0}</b> exist.".format(labCode))
-    redirectURL="%s?msg=%s" % (myurl,msg)
+    redirectURL="%s?profile=%s&msg=%s" % (myurl,profile,msg)
     printheader(True, redirectURL, "0", operation)
     exit()
-  assignedcsv = ggetc + "assignedguids-" + labCode + ".csv"
+  assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
   if not os.path.exists(assignedcsv):
     with open(assignedcsv, "a") as ipfile:
       ipfile.write("guid,ipaddr\n")
@@ -214,7 +229,7 @@ elif operation == "searchguid":
               activated = True
   if activated == False:
     msg=urllib.quote("ERROR, The activation key you entered does not match for lab code <b>{0}</b>, please contact a lab proctor if you feel this is an error.".format(labCode))
-    redirectURL="%s?msg=%s" % (myurl,msg)
+    redirectURL="%s?profile=%s&msg=%s" % (myurl,profile,msg)
     printheader(True, redirectURL, "0", operation)
     exit()
   foundGuid = ""
@@ -233,7 +248,7 @@ elif operation == "searchguid":
           appID = allrow['appid']
           break
   if foundGuid != "" and appID != "":
-    redirectURL="%s?operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,foundGuid,labCode,appID)
+    redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
     printheader(True, redirectURL, "0", operation)
     exit()
   assignedGuid = False
@@ -276,11 +291,11 @@ elif operation == "searchguid":
   fcntl.flock(ipfile, fcntl.LOCK_UN)
   if not assignedGuid:
     msg=urllib.quote("Sorry, there are no available GUIDs for lab <b>{0}</b>, please double check that you selected the correct lab code or contact a lab proctor.".format(labCode))
-    redirectURL="%s?msg=%s" % (myurl,msg)
+    redirectURL="%s?profile=%s&msg=%s" % (myurl,profile,msg)
     printheader(True, redirectURL, "0", operation)
     exit()
   else:
-    redirectURL="%s?operation=setguid&guid=%s&labcode=%s&appid=%s" % (myurl,foundGuid,labCode,appID)
+    redirectURL="%s?profile=%s&operation=setguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
     printheader(True, redirectURL, "0")
     exit()
 elif operation == "setguid":
@@ -305,7 +320,7 @@ elif operation == "setguid":
     printfooter()
     exit ()
   appID = form.getvalue('appid')
-  redirectURL="%s?operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,foundGuid,labCode,appID)
+  redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
   printheader(True, redirectURL, "0", operation, foundGuid, labCode, appID)
   exit()
 elif operation == "showguid":
