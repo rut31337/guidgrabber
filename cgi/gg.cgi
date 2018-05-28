@@ -347,16 +347,24 @@ elif operation == "showguid":
   bastion = ""
   labguide = ""
   urls = ""
+  found = False
   with open(labcsv) as csvfile:
     labcodes = csv.DictReader(csvfile)
     for row in labcodes:
       if row['code'] == labCode:
+        found = True
         bastion = row['bastion']
         labguide = row['labguide']
         description = row['description']
         urls = row['urls']
         break
   printheader(False, "", "", operation)
+  if not found:
+    print "Unexpected ERROR: This lab no longer exists. Please contact lab proctor.<br>"
+    print "Only if <b>directed by lab proctor</b> click this button: <button onclick='rusure()'>RESET STATION</button>"
+    printback()
+    printfooter()
+    exit()
   if 'guid' not in form:
     print "Unexpected ERROR: no GUID found. Please contact lab proctor."
     printback()

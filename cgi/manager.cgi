@@ -73,6 +73,7 @@ else:
   profile = os.environ.get('REMOTE_USER')
 
 myurl = "/gg/manager.cgi"
+ggurl = "https://www.opentlc.com/gg/gg.cgi"
 ggroot = "/var/www/guidgrabber"
 ggetc = ggroot + "/etc/"
 ggbin = ggroot + "/bin/"
@@ -163,6 +164,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
         if row['code'] == labCode:
           printheader()
           print "ERROR, Lab %s already defined.  Delete it first." % labCode
+          printback2()
           printfooter()
           exit()
   labName = form.getvalue('labname')
@@ -173,7 +175,8 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   ln = '"%s","%s","%s","%s","%s","%s",""\n' % (labCode, labName, labKey, bastion, docURL, labURLS)
   with open(labcsv, "a") as conffile:
     conffile.write(ln)
-  msg=urllib.quote("Lab Created")
+  ms="Lab Created. Please copy this link: <b>%s?profile=%s</b><br>You should create a short URL for this link and provide it to your users." % (ggurl, profile)
+  msg=urllib.quote(ms)
   redirectURL="%s?msg=%s" % (myurl, msg)
   printheader(True, redirectURL, "0", "none")
   exit()
