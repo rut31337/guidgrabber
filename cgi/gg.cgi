@@ -15,6 +15,18 @@ from random import randint
 import time
 from time import sleep
 
+def print_reset():
+  print """
+<script>
+function rusure() {
+    var txt;
+    if (confirm("Warning: You should only do this if you just arrived to the lab session and are ready to begin or you are done with your lab entirely.  If you are sure click OK below otherwise, click Cancel.")) {
+      window.location.href = "%s?profile=%s&operation=reset";
+    }
+}
+</script>
+""" % (myurl, profile)
+
 def printback():
   print '<br><button onclick="goBack()">< Go Back</button>'
 
@@ -61,6 +73,7 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
   print '<html><head>'
   if operation == "showguid":
     includehtml('head.inc')
+    print_reset()
   elif operation == "searchguid":
     includehtml('head3.inc')
   else:

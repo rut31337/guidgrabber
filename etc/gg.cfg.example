@@ -1,0 +1,4 @@
+[guidgrabber]
+cfuser: myuser
+cfpass: mypass
+cfurl: https://www.example.com

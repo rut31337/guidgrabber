@@ -8,3 +8,25 @@ function goBack() {
     window.history.back();
 }
 </script>
+
+<style>
+a:link {
+    text-decoration: none;
+    color: blue;
+}
+
+a:visited {
+    text-decoration: none;
+    color: blue;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: blue;
+}
+
+a:active {
+    text-decoration: underline;
+    color: blue;
+}
+</style>
