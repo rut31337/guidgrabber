@@ -344,7 +344,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   avl = tot - asg
   print "<th style='font-size: 0.6em;'>Available Labs:</th><td style='font-size: 0.6em;'>%s</td></tr>" % avl
   print "<tr><td align=right>"
-  printback()
+  printback2()
   print "</td><td align=left><button onclick=\"history.go(0)\" type=button>Refresh</button></td></tr>"
   print "</table></center>"
   printfooter(operation)
