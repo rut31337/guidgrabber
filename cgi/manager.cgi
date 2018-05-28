@@ -13,6 +13,9 @@ def printback():
 def printback2():
   print "<button onclick=\"location.href='%s'\" type=button><&nbsp;Back</button>" % myurl
 
+def printback3(labCode):
+  print "<button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button><&nbsp;Back</button>" % (myurl, labCode)
+
 def callredirect(redirectURL, waittime=0):
   print '<head>'
   print '<meta http-equiv="refresh" content="%s;url=%s" />' % (waittime, redirectURL)
@@ -102,6 +105,7 @@ if operation == "none":
     print "<tr><td style='font-size: .8em;'><a href=%s?operation=choose_lab>View Lab GUID Utilization</a></td></tr>" % myurl
   print '</table></center>'
   printfooter(operation)
+  exit()
 elif operation == "create_new_lab_form":
   printheader()
   printform('create_new_lab')
@@ -140,6 +144,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
   print "</form></td></tr>"
   print '</table></center>'
   printfooter(operation)
+  exit()
 elif operation == "create_lab" or operation == 'create_new_lab':
   if 'labcode' not in form or 'labname' not in form or 'labkey' not in form:
     printheader()
@@ -278,19 +283,20 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     printheader(True, redirectURL, "0")
     printfooter()
     exit()
-  printheader()
   asg = 0
   tot = 0
   rowc = 0
   maxrow = 10
-  print "<center><table border=1 style='border-collapse: collapse;'>"
   allguidscsv = ggetc + profile + "-availableguids-" + labCode + ".csv"
   assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
   if not os.path.exists(allguidscsv):
     msg=urllib.quote("ERROR, No guids for lab code <b>{0}</b> exist.".format(labCode))
     redirectURL="%s?msg=%s" % (myurl, msg)
     printheader(True, redirectURL, "0", operation)
+    printfooter()
     exit()
+  printheader()
+  print "<center><table border=1 style='border-collapse: collapse;'>"
   with open(allguidscsv) as allfile:
     allf = csv.DictReader(allfile)
     for allrow in allf:
@@ -301,22 +307,28 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
       print "<table border=0>"
       guid = allrow['guid']
       appID = allrow['appid']
-      print "<tr><td style='font-size: 0.6em;'><b>" + guid + "</b></td></tr>"
+      print "<tr><td style='font-size: 0.6em;' align=center><a href='%s?operation=manage_guid&guid=%s&labcode=%s'>%s</b></td></tr>" % (myurl, guid, labCode, guid)
       ravurl = "https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid, appID)
       print "<tr><td style='font-size: 0.6em;'><a href='%s' target='_blank'>Lab Dashboard</a></td></tr>" % ravurl
       assigned = False
-      with open(assignedcsv) as ipfile:
-        iplocks = csv.DictReader(ipfile)
-        for row in iplocks:
-          if row['guid'] == guid:
-            foundGuid = row['guid']
-            assigned = True
-            asg = asg + 1
-            ipaddr = row['ipaddr']
-            #print '<tr><td><a href="vnc://%s">Remote Desktop</a></td></tr>' % ipaddr
-            break
-      if assigned:  
+      locked = False
+      if os.path.exists(assignedcsv):
+        with open(assignedcsv) as ipfile:
+          iplocks = csv.DictReader(ipfile)
+          for row in iplocks:
+            if row['guid'] == guid:
+              foundGuid = row['guid']
+              assigned = True
+              asg = asg + 1
+              ipaddr = row['ipaddr']
+              if ipaddr == "locked":
+                locked = True
+              #print '<tr><td><a href="vnc://%s">Remote Desktop</a></td></tr>' % ipaddr
+              break
+      if assigned and not locked:
         print "<tr><td style='font-size: 0.6em; color: green;'>Assigned</td></tr>"
+      elif locked:
+        print "<tr><td style='font-size: 0.6em; color: red;'>Locked</td></tr>"
       else:
         print "<tr><td style='font-size: 0.6em; color: red;'>Not Assigned</td></tr>"
       print "</table>"
@@ -336,6 +348,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   print "</td><td align=left><button onclick=\"history.go(0)\" type=button>Refresh</button></td></tr>"
   print "</table></center>"
   printfooter(operation)
+  exit()
 elif operation == "get_guids":
   if 'labcode' not in form or 'catname' not in form or 'catitem' not in form:
     printheader()
@@ -360,6 +373,58 @@ elif operation == "get_guids":
   else:
     print "ERROR, no updating GUIDs failed."
   printback2()
+  printfooter()
+  exit()
+elif operation == "manage_guid":
+  if 'labcode' not in form or 'guid' not in form:
+    printheader()
+    print "ERROR, no labcode and/or guid provided."
+    printback()
+    printfooter()
+    exit()
+  labCode = form.getvalue('labcode')
+  guid = form.getvalue('guid')
+  printheader()
+  print "<center><table>"
+  print "<tr><td style='font-size: .6em;' colspan=2>Choose a operation for GUID <b>%s</b>, <b>%s</b>:</td></tr>" % (guid, profile)
+  print "<tr><td style='font-size: .6em;'><a href=%s?operation=lock_guid&guid=%s&labcode=%s>Lock GUID Availability</a> - Remove GUID from available pool. This will release current user (if any) as well!</td></tr>" % (myurl, guid, labCode)
+  print "<tr><td style='font-size: .6em;'><a href=%s?operation=release_guid&guid=%s&labcode=%s>Release GUID</a> - Make GUID generally available even if already in use <font color=red>(Danger!)</font></td></tr>" % (myurl, guid, labCode)
+  print "<tr><td colspan=2 align=center>"
+  printback3(labCode)
+  print '</td></tr>'
+  print '</table></center>'
+  printfooter()
+  exit()
+elif operation == "lock_guid" or operation == "release_guid":
+  if 'labcode' not in form or 'guid' not in form:
+    printheader()
+    print "ERROR, no labcode and/or guid provided."
+    printback()
+    printfooter()
+    exit()
+  labCode = form.getvalue('labcode')
+  guid = form.getvalue('guid')
+  assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
+  printheader()
+  if os.path.exists(assignedcsv):
+    regex = '/%s/d' % guid
+    ret = call(["/bin/sed", "-i", regex, assignedcsv], stderr=None)
+  if operation == "lock_guid":
+    if not os.path.exists(assignedcsv):
+      ln = '"guid","ipaddr"\n'
+      with open(assignedcsv, "w") as conffile:
+        conffile.write(ln)
+    ln = '"%s","locked"\n' % (guid)
+    with open(assignedcsv, "a") as conffile:
+      conffile.write(ln)
+  print "<center>"
+  if operation == "lock_guid":
+    print "GUID <b>%s</b> Locked<br>" % guid
+  elif operation == "release_guid":
+    print "GUID <b>%s</b> Released<br>" % guid
+  print "Remember: If a user was assigned this GUID, make sure they use the <b>Reset Station</b> button to obtain a new GUID!<br>"
+  printback3(labCode)
+  print "</center>"
   printfooter()
   exit()
 else:
