@@ -212,7 +212,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
-  if not (re.search("[a-z|A-Z|0-9]", labCode)):
+  if not (re.match("^[a-zA-Z0-9]+$", labCode)):
     printheader()
     print "ERROR: Lab code any only be alphanumeric"
     printback()
@@ -245,7 +245,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint)
   with open(labcsv, "a") as conffile:
     conffile.write(ln)
-  ms="<ul style='color: black; font-size: .7em;'><li>Lab Added</li><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (ggurl, profile)
+  ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
   msg=urllib.quote(ms)
   redirectURL="%s?msg=%s" % (myurl, msg)
   printheader(True, redirectURL, "0", "none")
@@ -497,7 +497,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       printfooter()
       exit()
     cfpass = form.getvalue('cfpass')
-    if not re.search("[0-9]", num_instances):
+    if not re.match("^[0-9]+$", num_instances):
       printheader()
       print "ERROR: Number of instances must be a number <= 50.<br><center>"
       printback()
