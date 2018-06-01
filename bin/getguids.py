@@ -3,6 +3,7 @@
 import argparse
 import requests
 import urllib
+import re
 from requests.auth import HTTPBasicAuth
 
 parser = argparse.ArgumentParser(description="Get GUIDS From CloudForms")
@@ -11,6 +12,7 @@ parser.add_argument('--cfuser', help='CloudForms Appliance User', required=True)
 parser.add_argument('--cfpass', help='CloudForms Appliance Password', required=True)
 parser.add_argument('--catalog', help='CloudForms Catalog The Item Is In', required=True)
 parser.add_argument('--item', help='CloudForms Item Name', required=True)
+parser.add_argument('--ufilter', help='User To Filter Searches To', required=False, default="")
 parser.add_argument('--out', help='File to write CSV into', required=True)
 parser.add_argument('--insecure', help='Use Insecure SSL Cert', action="store_false")
 args = parser.parse_args()
@@ -22,6 +24,7 @@ catName = args.catalog
 catalogName = urllib.quote(catName)
 itName = args.item
 itemName = urllib.quote(itName)
+userFilter = args.ufilter
 outFile = args.out
 sslVerify = args.insecure
 
@@ -59,20 +62,39 @@ else:
   itemID = str(items[0]['id'])
   #print "Item ID: " + itemID
 
-url = "/api/services?attributes=href%2Ctags%2Cname%2Ccustom_attributes%2Coptions&expand=resources&filter%5B%5D=service_template_id%3D" + itemID
-services = apicall(token, url, "get", inp = None )
+#surl = "/api/services?attributes=href%2Ctags%2Cname%2Ccustom_attributes%2Coptions&expand=resources&filter%5B%5D=service_template_id%3D" + itemID
+surl = "/api/services?attributes=tags%2Ccustom_attributes&expand=resources&filter%5B%5D=service_template_id%3D" + itemID
+
+if userFilter != "":
+  url = "/api/users?expand=resources&filter%5B%5D=userid%3D" + userFilter
+  users = apicall(token, url, "get", inp = None )
+  if not users:
+    print "ERROR: No such user " + userFilter
+    exit ()
+  else:
+    userID = str(users[0]['id'])
+    surl = surl + "&filter%5B%5D=evm_owner_id%3D" + userID
+
+services = apicall(token, surl, "get", inp = None )
 
 f = open(outFile, 'w')
-f.write("guid,appid\n")
+f.write("guid,appid,servicetype\n")
 
 for svc in services:
   appID = ""
   guid = ""
+  serviceType = ""
   for cab in svc['custom_attributes']:
     if cab['name'] == 'GUID':
       guid = cab['value']
     elif cab['name'] == 'applicationid':
       appID = cab['value']
-  f.write(guid + "," + appID + "\n")
+  if guid != "":
+    for tag in svc['tags']:
+      if re.match(r'^\/managed\/servicetype', tag['name']):
+        serviceType = re.split('/', tag['name'])[3]
+        break
+  ln=guid + "," + appID + "," + serviceType + "\n"
+  f.write(ln)
 
 f.close()

@@ -157,7 +157,7 @@ if operation == "requestguid":
       cappID = c['summitappid'].value
     except:
       cappID = ""
-    if cguid != "" and clabCode != "" and cappID != "":
+    if cguid != "" and clabCode != "":
       redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,cguid,clabCode,cappID)
       printheader(True, redirectURL, "0", operation)
       exit()
@@ -260,7 +260,7 @@ elif operation == "searchguid":
         if allrow['guid'] == foundGuid:
           appID = allrow['appid']
           break
-  if foundGuid != "" and appID != "":
+  if foundGuid != "":
     redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
     printheader(True, redirectURL, "0", operation)
     exit()
@@ -326,13 +326,16 @@ elif operation == "setguid":
     printfooter()
     exit ()
   foundGuid = form.getvalue('guid')
-  if 'appid' not in form:
-    printheader()
-    print "ERROR, no appid provided."
-    printback()
-    printfooter()
-    exit ()
-  appID = form.getvalue('appid')
+  #if 'appid' not in form:
+  #  printheader()
+  #  print "ERROR, no appid provided."
+  #  printback()
+  #  printfooter()
+  #  exit ()
+  if 'appid' in form:
+    appID = form.getvalue('appid')
+  else:
+    appID = ""
   redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
   printheader(True, redirectURL, "0", operation, foundGuid, labCode, appID)
   exit()
@@ -346,7 +349,10 @@ elif operation == "showguid":
   labCode = form.getvalue('labcode')
   bastion = ""
   labguide = ""
+  description = ""
   urls = ""
+  labUser = ""
+  labSSHkey = ""
   found = False
   with open(labcsv) as csvfile:
     labcodes = csv.DictReader(csvfile)
@@ -357,6 +363,8 @@ elif operation == "showguid":
         labguide = row['labguide']
         description = row['description']
         urls = row['urls']
+        labUser = row['labuser']
+        labSSHkey = row['labsshkey']
         break
   printheader(False, "", "", operation)
   if not found:
@@ -380,9 +388,21 @@ elif operation == "showguid":
     labguide = labguide.replace('REPL', guid)
     print "<li>Open the lab guide by clicking <a href='%s' target='_blank'>here</a></li>" % labguide
   print "<li>Consult the lab guide instructions <i>before</i> attempting to connect to the lab environment.</li>"
+  if labSSHkey != "":
+    print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
+    print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
   if bastion != "":
     bastion = bastion.replace('REPL', guid)
-    print ("<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>[lab-user@localhost ~]$ ssh {0}</pre></li>".format(bastion))
+    if labUser != "":
+      print "<li>The generic SSH login for this lab is <b>%s</b></li>" % labUser
+      lu = "%s@" % labUser
+    else:
+      lu = ""
+    if labSSHkey != "":
+      lk = "-i /path/to/keyfile.pem "
+    else:
+      lk = ""
+    print "<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>[lab-user@localhost ~]$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)
   else:
     print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre>If lab requires the use of the SSH command it would look like this:<br><pre>ssh host-{0}.rhpds.opentlc.com</pre><b>Note:</b>These are <b>just examples</b>, please consult the lab instructions for actual host names and URLs.</li>".format(guid))
   if urls != "":
@@ -400,8 +420,8 @@ elif operation == "showguid":
   if 'appid' in form:
     appid = form.getvalue('appid')
     print "<li>You can access your detailed lab environment information at <a href='https://www.opentlc.com/summit-status/status.php?appid=%s&guid=%s' target='_blank'>here</a></li>" % (appid,guid)
-  consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
-  print "<li>If <b>required</b> by the lab guide instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL
+    consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
+    print "<li>If <b>required</b> by the lab guide instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL
   print "<li>To clear the way for the next attendee, please click the below <b>RESET STATION</b> button when you are <i>completely finished</i> with your lab.</li>"
   print "</ul></td></tr></table>"
   print "<p>If the current lab session is <b>just starting</b> or you are <b>completely finished with your current lab</b> please click the button below to reset this station.</p>"
