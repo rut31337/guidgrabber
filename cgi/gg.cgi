@@ -128,8 +128,13 @@ myurl = "/gg/gg.cgi"
 ggHtmlRoot = "/gg"
 sslVerify = True
 ggetc = "/var/www/guidgrabber/etc/"
-labcsv = ggetc + profile + "-labconfig.csv"
-if not os.path.isfile(labcsv):
+
+profileDir = ggetc + "/" + profile
+if not os.path.isdir(profileDir):
+  os.mkdir(profileDir)
+labConfigCSV = profileDir + "/labconfig.csv"
+
+if not os.path.isfile(labConfigCSV):
   printheader()
   print "Sorry, labs for this session are not yet available.  Please try again later."
   printfooter()
@@ -163,9 +168,9 @@ if operation == "requestguid":
       exit()
   foundlabs = False
   fl = {}
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
-    for row in labcodes:
+  with open(labConfigCSV) as csvFile:
+    labCodes = csv.DictReader(csvFile)
+    for row in labCodes:
       if row['code'].startswith("#"):
         continue
       gt = ggetc + profile + "-availableguids-" + row['code'] + ".csv"
@@ -214,15 +219,15 @@ elif operation == "searchguid":
     printfooter()
     exit ()
   labCode = form.getvalue('labcode')
-  allguidscsv = ggetc + profile + "-availableguids-" + labCode + ".csv"
-  if not os.path.exists(allguidscsv):
+  allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
+  if not os.path.exists(allGuidsCSV):
     msg=urllib.quote("ERROR, No guids for lab code <b>{0}</b> exist.".format(labCode))
     redirectURL="%s?profile=%s&msg=%s" % (myurl,profile,msg)
     printheader(True, redirectURL, "0", operation)
     exit()
-  assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
-  if not os.path.exists(assignedcsv):
-    with open(assignedcsv, "a") as ipfile:
+  assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
+  if not os.path.exists(assignedCSV):
+    with open(assignedCSV, "a") as ipfile:
       ipfile.write("guid,ipaddr\n")
   if 'ipaddr' not in form:
     print "ERROR, no ipaddr provided."
@@ -234,9 +239,9 @@ elif operation == "searchguid":
     activated = True
   else:
     activated = False
-    with open(labcsv) as csvfile:
-      labcodes = csv.DictReader(csvfile)
-      for row in labcodes:
+    with open(labConfigCSV) as csvFile:
+      labCodes = csv.DictReader(csvFile)
+      for row in labCodes:
         if row['code'] == labCode:
             if actkey == row['activationkey']:
               activated = True
@@ -247,14 +252,14 @@ elif operation == "searchguid":
     exit()
   foundGuid = ""
   appID = ""
-  with open(assignedcsv) as ipfile:
+  with open(assignedCSV) as ipfile:
     iplocks = csv.DictReader(ipfile)
     for row in iplocks:
       if row['ipaddr'] == ipaddr:
         foundGuid = row['guid']
         break
   if foundGuid != "":
-    with open(allguidscsv) as allfile:
+    with open(allGuidsCSV) as allfile:
       allf = csv.DictReader(allfile)
       for allrow in allf:
         if allrow['guid'] == foundGuid:
@@ -267,11 +272,11 @@ elif operation == "searchguid":
   assignedGuid = False
   #sleep(randint(1,5))
   allGuids = {}
-  with open(allguidscsv) as allfile:
+  with open(allGuidsCSV) as allfile:
     allf = csv.DictReader(allfile)
     for allrow in allf:
       allGuids[allrow['guid']] = True
-  ipfile = open(assignedcsv)
+  ipfile = open(assignedCSV)
   while True:
     try:
       fcntl.flock(ipfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -292,10 +297,10 @@ elif operation == "searchguid":
       foundGuid = g
       break
   if foundGuid != "":
-    ipfile = open(assignedcsv, 'a')
+    ipfile = open(assignedCSV, 'a')
     ipfile.write(foundGuid + "," + ipaddr + "\n")
     assignedGuid = True
-    with open(allguidscsv) as allfile:
+    with open(allGuidsCSV) as allfile:
       allf = csv.DictReader(allfile)
       for allrow in allf:
         if allrow['guid'] == foundGuid:
@@ -348,19 +353,19 @@ elif operation == "showguid":
     exit()
   labCode = form.getvalue('labcode')
   bastion = ""
-  labguide = ""
+  docURL = ""
   description = ""
   urls = ""
   labUser = ""
   labSSHkey = ""
   found = False
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
-    for row in labcodes:
+  with open(labConfigCSV) as csvFile:
+    labCodes = csv.DictReader(csvFile)
+    for row in labCodes:
       if row['code'] == labCode:
         found = True
         bastion = row['bastion']
-        labguide = row['labguide']
+        docURL = row['docurl']
         description = row['description']
         urls = row['urls']
         labUser = row['labuser']
@@ -384,9 +389,9 @@ elif operation == "showguid":
   print "<center><h2>Welcome to: %s</h2><h3>Your assigned lab GUID is:</h3><table border=1><tr><td align=center><font size='7'><pre>%s</pre></font></td></tr></table></center>" % (description,guid)
   print "Let's get started! Please read these instructions carefully before starting to have the best lab experience:"
   print "<ul><li>Save the above <b>GUID</b> as you will need it to access your lab's systems from your workstation.</li>"
-  if labguide != "":
-    labguide = labguide.replace('REPL', guid)
-    print "<li>Open the lab guide by clicking <a href='%s' target='_blank'>here</a></li>" % labguide
+  if docURL != "":
+    docURL = docURL.replace('REPL', guid)
+    print "<li>Open the lab guide by clicking <a href='%s' target='_blank'>here</a></li>" % docURL
   print "<li>Consult the lab guide instructions <i>before</i> attempting to connect to the lab environment.</li>"
   if labSSHkey != "":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey

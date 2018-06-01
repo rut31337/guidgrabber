@@ -110,8 +110,11 @@ ggetc = ggroot + "/etc/"
 ggbin = ggroot + "/bin/"
 cfgfile = ggetc + "gg.cfg"
 
-labcsv = ggetc + profile + "-labconfig.csv"
-labCSVheader = "code,description,activationkey,bastion,labguide,urls,catname,catitem,labuser,labsshkey,environment,blueprint\n"
+profileDir = ggetc + "/" + profile
+if not os.path.isdir(profileDir):
+  os.mkdir(profileDir)
+labConfigCSV = profileDir + "/labconfig.csv"
+labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint\n"
 
 form = cgi.FieldStorage()
 if 'operation' in form:
@@ -119,7 +122,7 @@ if 'operation' in form:
 else:
   operation = "none"
 if operation == "none":
-  if not os.path.exists(labcsv):
+  if not os.path.exists(labConfigCSV):
     printheader()
     printform('create_lab')
     printfooter()
@@ -132,15 +135,15 @@ if operation == "none":
   print "<tr><td style='font-size: .7em;' colspan=2>Choose an operation <b>%s</b>:</td></tr>" % profile
   print "<tr><td style='font-size: .7em;'><a href=%s?operation=create_new_lab_form>Add A New Lab Configuration</a></td></tr>" % myurl
   found = False
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
+  with open(labConfigCSV) as csvFile:
+    labcodes = csv.DictReader(csvFile)
     for row in labcodes:
       if row['code'].startswith("#"):
         continue
       else:
         found = True
         break
-  if os.path.exists(labcsv) and found:
+  if os.path.exists(labConfigCSV) and found:
     print "<tr><td style='font-size: .7em;'><a href=%s?operation=edit_lab>View/Edit Lab Configuration</a></td></tr>" % myurl
     print "<tr><td style='font-size: .7em;'><a href=%s?operation=deploy_lab>Deploy Lab Instances</a></td></tr>" % myurl
     print "<tr><td style='font-size: .7em;'><a href=%s?operation=update_guids>Update Available Lab GUIDs</a></td></tr>" % myurl
@@ -186,8 +189,8 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
   print '<tr><td><p style="color: black; font-size: .8em;">Please choose the lab code you wish to %s:</p></td></tr>' % op
   print '<tr><td><form method="post" action="%s?operation=%s">' % (myurl, op2)
   print "<table border=0><tr><td align=right style='font-size: .6em;'><b>Lab Code:</b></td><td><select name='labcode'>"
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
+  with open(labConfigCSV) as csvFile:
+    labcodes = csv.DictReader(csvFile)
     for row in labcodes:
       if row['code'].startswith("#"):
         continue
@@ -218,11 +221,11 @@ elif operation == "create_lab" or operation == 'create_new_lab':
     printback()
     printfooter()
     exit()
-  if not os.path.exists(labcsv):
-    with open(labcsv, "w") as conffile:
+  if not os.path.exists(labConfigCSV):
+    with open(labConfigCSV, "w") as conffile:
       conffile.write(labCSVheader)
   else:
-    with open(labcsv) as conffile:
+    with open(labConfigCSV) as conffile:
       labcodes = csv.DictReader(conffile)
       for row in labcodes:
         if row['code'] == labCode:
@@ -243,7 +246,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   environment = form.getvalue('environment')
   blueprint = form.getvalue('blueprint')
   ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint)
-  with open(labcsv, "a") as conffile:
+  with open(labConfigCSV, "a") as conffile:
     conffile.write(ln)
   ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
   msg=urllib.quote(ms)
@@ -259,8 +262,8 @@ elif operation == "checklc" or operation == "dellc" or operation == "editlc":
     exit()
   labCode = form.getvalue('labcode')
   valid = False
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
+  with open(labConfigCSV) as csvFile:
+    labcodes = csv.DictReader(csvFile)
     for row in labcodes:
       if row['code'] == labCode:
         valid = True
@@ -289,12 +292,12 @@ elif operation == "print_lab":
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
+  with open(labConfigCSV) as csvFile:
+    labcodes = csv.DictReader(csvFile)
     for row in labcodes:
       if row['code'] == labCode:
         printheader()
-        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['labguide'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
+        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
         printfooter()
         exit()
   printheader()
@@ -309,19 +312,25 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
+  allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
+  assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
   if operation == "del_lab" or operation == "update_lab":
-    f = open(labcsv)
+    f = open(labConfigCSV)
     old = f.readlines()
     f.close()
-    with open(labcsv, "w") as conffile:
+    with open(labConfigCSV, "w") as conffile:
       conffile.write(labCSVheader)
-    f = open(labcsv,"a")
+    f = open(labConfigCSV,"a")
     labcodes = csv.DictReader(old)
     if operation == "del_lab":
       for row in labcodes:
         if row['code'] != labCode:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['labguide'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
           f.write(out)
+      if os.path.exists(allGuidsCSV):
+        os.remove(allGuidsCSV)
+      if os.path.exists(assignedCSV):
+        os.remove(assignedCSV)
     elif operation == "update_lab":
       for row in labcodes:
         if row['code'] == labCode:
@@ -338,7 +347,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           blueprint = form.getvalue('blueprint')
           out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint)
         else:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['labguide'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
         f.write(out)
     f.close()
     redirectURL = "%s?operation=none" % (myurl)
@@ -349,9 +358,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   tot = 0
   rowc = 0
   maxrow = 10
-  allguidscsv = ggetc + profile + "-availableguids-" + labCode + ".csv"
-  assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
-  if not os.path.exists(allguidscsv):
+  if not os.path.exists(allGuidsCSV):
     msg=urllib.quote("ERROR: No guids for lab code <b>{0}</b> exist.".format(labCode))
     redirectURL="%s?msg=%s" % (myurl, msg)
     printheader(True, redirectURL, "0", operation)
@@ -359,7 +366,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     exit()
   printheader()
   print "<center><table border=1 style='border-collapse: collapse;'>"
-  with open(allguidscsv) as allfile:
+  with open(allGuidsCSV) as allfile:
     allf = csv.DictReader(allfile)
     for allrow in allf:
       tot = tot + 1
@@ -378,8 +385,8 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
         print "<tr><td style='font-size: 0.6em;'><a href='%s' target='_blank'>Lab Dashboard</a></td></tr>" % ravurl
       assigned = False
       locked = False
-      if os.path.exists(assignedcsv):
-        with open(assignedcsv) as ipfile:
+      if os.path.exists(assignedCSV):
+        with open(assignedCSV) as ipfile:
           iplocks = csv.DictReader(ipfile)
           for row in iplocks:
             if row['guid'] == guid:
@@ -423,11 +430,12 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
+  allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
   catName = ""
   catItem = ""
   environment = ""
-  with open(labcsv) as csvfile:
-    labcodes = csv.DictReader(csvfile)
+  with open(labConfigCSV) as csvFile:
+    labcodes = csv.DictReader(csvFile)
     for row in labcodes:
       if row['code'] == labCode:
         catName = row['catname']
@@ -457,7 +465,6 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printfooter()
     exit()
   if operation == "get_guids":
-    allguidscsv = ggetc + profile + "-availableguids-" + labCode + ".csv"
     getguids = ggbin + "getguids.py"
     config = ConfigParser.ConfigParser()
     config.read(cfgfile)
@@ -466,12 +473,12 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printheader()
     print "<center>Please wait, looking for GUIDs...</center>"
     print "<pre>"
-    execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allguidscsv, "--ufilter", profile])
+    execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
     print "</pre>"
-    if not os.path.exists(allguidscsv):
+    if not os.path.exists(allGuidsCSV):
       print "<center>ERROR: Updating GUIDs failed in environment <b>%s</b>.</center>" % environment
     else:
-      num_lines = sum(1 for line in open(allguidscsv)) - 1
+      num_lines = sum(1 for line in open(allGuidsCSV)) - 1
       if num_lines < 1:
         print "<center>We were able to find the catalog and catalog item, however it appears you do not have any services deployed in <b>%s</b> under your account <b>%s</b>.  Did you forget to run <b>order_svc.sh</b>?</center>" % (environment, profile)
       else:
@@ -569,19 +576,19 @@ elif operation == "lock_guid" or operation == "release_guid":
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
+  assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
   guid = form.getvalue('guid')
-  assignedcsv = ggetc + profile + "-assignedguids-" + labCode + ".csv"
   printheader()
-  if os.path.exists(assignedcsv):
+  if os.path.exists(assignedCSV):
     regex = '/%s/d' % guid
-    ret = call(["/bin/sed", "-i", regex, assignedcsv], stderr=None)
+    ret = call(["/bin/sed", "-i", regex, assignedCSV], stderr=None)
   if operation == "lock_guid":
-    if not os.path.exists(assignedcsv):
+    if not os.path.exists(assignedCSV):
       ln = '"guid","ipaddr"\n'
-      with open(assignedcsv, "w") as conffile:
+      with open(assignedCSV, "w") as conffile:
         conffile.write(ln)
     ln = '"%s","locked"\n' % (guid)
-    with open(assignedcsv, "a") as conffile:
+    with open(assignedCSV, "a") as conffile:
       conffile.write(ln)
   print "<center>"
   if operation == "lock_guid":

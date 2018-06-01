@@ -1,0 +1,11 @@
+code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint
+"L1007","lab L1007","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1007.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1007","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1017","lab L1017","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1017.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1017","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1023","lab L1023","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1023.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1023","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1024","lab L1024","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1024.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1024","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1044","lab L1044","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1044.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1044","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1056","lab L1056","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1056.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1056","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1061","lab L1061","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1061.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1061","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1086","lab L1086","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1086.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1086","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"L1096","lab L1096","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1096.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1096","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
+"W1025","lab W1025","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/W1025.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","W1025","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
