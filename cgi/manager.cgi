@@ -9,8 +9,11 @@ import sys
 import ConfigParser, os
 import re
 
-def execute(command):
+def execute(command, quiet=False):
   process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+  if quiet:
+    output = process.communicate()
+    return
   while True:
     nextline = process.stdout.readline()
     if nextline == '' and process.poll() is not None:
@@ -22,7 +25,10 @@ def execute(command):
   if (exitCode == 0):
     return output
   else:
-    print "ERROR: Command failed with return code (%s)<br>OUT(%s)" % (exitCode, output)
+    prerror("ERROR: Command failed with return code (%s)<br>OUT(%s)" % (exitCode, output))
+
+def prerror(msg):
+  print "<center>%s<br>" % msg
 
 def printback():
   print '<button onclick="goBack()"><&nbsp;Back</button>'
@@ -88,16 +94,15 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print "<tr><td align=right style='font-size: 0.6em;'><b>Lab User Login:</b></td><td><input type='text' name='labuser' size='80' value='%s'></td></tr>" % labuser
   print "<tr><td align=right style='font-size: 0.6em;'><b>Lab SSH Key URL:</b></td><td><input type='text' name='labsshkey' size='80' value='%s'></td></tr>" % labsshkey
   print "<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='blueprint' size='80' value='%s'></td></tr>" % blueprint
-  print '<tr><td align=right>'
+  print '<tr><td colspan=2 align=center>'
   printback2()
-  print '</td>'
-  print '<td align=left><input type="submit" value="Next&nbsp;>"></td></tr></table>'
+  print '<input type="submit" value="Next&nbsp;>"></td></tr></table>'
   print "</form></td></tr>"
   print '</table></center>'
 
 if not os.environ.get('REMOTE_USER'): 
   printheader()
-  print "ERROR: No profile specified."
+  prerror("ERROR: No profile specified.")
   printfooter()
   exit()
 else:
@@ -161,7 +166,7 @@ elif operation == "create_new_lab_form":
   exit()
 elif operation == "choose_lab" or operation == "edit_lab" or operation == "delete_lab" or operation == "update_guids" or operation == "deploy_lab" or operation == "delete_instance":
   printheader()
-  print "<center><table>"
+  print "<center><table border=0>"
   if 'msg' in form:
     print '<tr><td><p style="color: black; font-size: 1.2em;">' + form.getvalue('msg') + "</p></td></tr>"
   if operation == "choose_lab":
@@ -174,7 +179,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     op = "<b>view/edit</b>"
     op2 = "editlc"
   elif operation == 'update_guids':
-    op = "<b>update GUIDs for</b>"
+    op = "<b>delete and update available GUIDs for</b>"
     op2 = "get_guids"
   elif operation == 'deploy_lab':
     op = "<b>deploy instances for</b>"
@@ -183,12 +188,12 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     op = "<b>delete instances for <font color=red>(Danger, unrecoverable operation!)</font></b>"
     op2 = "delete_instances"
   else:
-    print "ERROR: Unknown operation."
+    prerror("ERROR: Unknown operation.")
     printfooter()
     exit()
-  print '<tr><td><p style="color: black; font-size: .8em;">Please choose the lab code you wish to %s:</p></td></tr>' % op
-  print '<tr><td><form method="post" action="%s?operation=%s">' % (myurl, op2)
-  print "<table border=0><tr><td align=right style='font-size: .6em;'><b>Lab Code:</b></td><td><select name='labcode'>"
+  print '<form method="post" action="%s?operation=%s">' % (myurl, op2)
+  print '<tr><td colspan=2 align=center><p style="color: black; font-size: .8em;">Please choose the lab you wish to %s:</p></td></tr>' % op
+  print "<tr><td colspan=2 align=center style='font-size: .6em;'><select name='labcode'>"
   with open(labConfigCSV) as csvFile:
     labcodes = csv.DictReader(csvFile)
     for row in labcodes:
@@ -200,24 +205,23 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     print "<tr><td align=right style='font-size: 0.6em;'><b>Number Of Instances To Deploy:</b></td><td><input type='text' name='num_instances' size='2'></td></tr>"
   if operation == 'deploy_lab' or operation == 'delete_instance':
     print "<tr><td align=right style='font-size: 0.6em;'><b>Password for user %s:</b></td><td><input type='password' name='cfpass' size='8'></td></tr>" % (profile)
-  print '<tr><td align=right>'
+  print '<tr><td colspan=2 align=center>'
   printback2()
-  print '</td><td colspan=2 align=left><input type="submit" value="Next&nbsp;>"></td></tr></table>'
-  print "</form></td></tr>"
-  print '</table></center>'
+  print '<input type="submit" value="Next&nbsp;>"></td></tr>'
+  print '</form></table></center>'
   printfooter(operation)
   exit()
 elif operation == "create_lab" or operation == 'create_new_lab':
   if 'labcode' not in form or 'labname' not in form or 'labkey' not in form or 'catname' not in form or 'catitem' not in form:
     printheader()
-    print "ERROR: Please fill out required fields."
+    prerror("ERROR: Please fill out required fields.")
     printback()
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
   if not (re.match("^[a-zA-Z0-9]+$", labCode)):
     printheader()
-    print "ERROR: Lab code any only be alphanumeric"
+    prerror("ERROR: Lab code any only be alphanumeric.")
     printback()
     printfooter()
     exit()
@@ -230,7 +234,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
       for row in labcodes:
         if row['code'] == labCode:
           printheader()
-          print "ERROR: Lab %s already defined.  Delete it first." % labCode
+          prerror("ERROR: Lab %s already defined.  Delete it first.<br><center>" % (labCode))
           printback2()
           printfooter()
           exit()
@@ -256,7 +260,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
 elif operation == "checklc" or operation == "dellc" or operation == "editlc":
   if 'labcode' not in form:
     printheader()
-    print "ERROR: No labcode provided."
+    prerror("ERROR: No labcode provided.")
     printback()
     printfooter()
     exit()
@@ -270,7 +274,7 @@ elif operation == "checklc" or operation == "dellc" or operation == "editlc":
         break
   if valid == False:
     printheader()
-    print "ERROR: The lab code provided not match a valid lab code."
+    prerror("ERROR: The lab code provided not match a valid lab code.")
     printback()
     printfooter()
     exit()
@@ -287,7 +291,7 @@ elif operation == "checklc" or operation == "dellc" or operation == "editlc":
 elif operation == "print_lab":
   if 'labcode' not in form:
     printheader()
-    print "ERROR: No labcode provided."
+    prerror("ERROR: No labcode provided.")
     printback()
     printfooter()
     exit()
@@ -301,13 +305,13 @@ elif operation == "print_lab":
         printfooter()
         exit()
   printheader()
-  print "ERROR: Labcode %s not found." % labCode
+  prerror("ERROR: Labcode %s not found.<br><center>" % (labCode))
   printfooter()
   exit()
 elif operation == "view_lab" or operation == "del_lab" or operation == "update_lab":
   if 'labcode' not in form:
     printheader()
-    print "ERROR: No labcode provided."
+    prerror("ERROR: No labcode provided.")
     printback()
     printfooter()
     exit()
@@ -359,13 +363,13 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   rowc = 0
   maxrow = 10
   if not os.path.exists(allGuidsCSV):
-    msg=urllib.quote("ERROR: No guids for lab code <b>{0}</b> exist.".format(labCode))
+    msg=urllib.quote("ERROR: No guids for lab code <b>{0}</b> exist.<br><center>".format(labCode))
     redirectURL="%s?msg=%s" % (myurl, msg)
     printheader(True, redirectURL, "0", operation)
     printfooter()
     exit()
   printheader()
-  print "<center><table border=1 style='border-collapse: collapse;'>"
+  print "<center><b>Lab %s<b><table border=1 style='border-collapse: collapse;'>" % labCode
   with open(allGuidsCSV) as allfile:
     allf = csv.DictReader(allfile)
     for allrow in allf:
@@ -399,11 +403,11 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
               #print '<tr><td><a href="vnc://%s">Remote Desktop</a></td></tr>' % ipaddr
               break
       if assigned and not locked:
-        print "<tr><td style='font-size: 0.6em; color: green;'>Assigned</td></tr>"
+        print "<tr><td align=center style='font-size: 0.6em; color: green;'>Assigned</td></tr>"
       elif locked:
-        print "<tr><td style='font-size: 0.6em; color: red;'>Locked</td></tr>"
+        print "<tr><td align=center style='font-size: 0.6em; color: red;'>Locked</td></tr>"
       else:
-        print "<tr><td style='font-size: 0.6em; color: red;'>Not Assigned</td></tr>"
+        print "<tr><td align=center style='font-size: 0.6em; color: red;'>Not Assigned</td></tr>"
       print "</table>"
       print "</td>"
       rowc = rowc + 1
@@ -411,21 +415,21 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
         print "</tr>"
         rowc = 0
   print "</table>"
-  print "<table>"
+  print "<table border=0>"
   print "<tr><th style='font-size: 0.6em;'>Total Labs:</th><td style='font-size: 0.6em;'>%s</td>" % tot
   print "<th style='font-size: 0.6em;'>Assigned Labs:</th><td style='font-size: 0.6em;'>%s</td>" % asg
   avl = tot - asg
   print "<th style='font-size: 0.6em;'>Available Labs:</th><td style='font-size: 0.6em;'>%s</td></tr>" % avl
-  print "<tr><td align=right>"
+  print "<tr><td colspan=6 align=center>"
   printback2()
-  print "</td><td align=left><button onclick=\"history.go(0)\" type=button>Refresh</button></td></tr>"
+  print "<button onclick=\"history.go(0)\" type=button>Refresh</button></td></tr>"
   print "</table></center>"
   printfooter(operation)
   exit()
 elif operation == "get_guids" or operation == "deploy_labs" or operation == "delete_instances":
   if 'labcode' not in form:
     printheader()
-    print "ERROR: No labcode provided."
+    prerror("ERROR: No labcode provided.")
     printback()
     printfooter()
     exit()
@@ -444,13 +448,13 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         break
   if catName == "" or catItem == "":
     printheader()
-    print "ERROR: Catalog item or name not set for lab code " + labCode
+    prerror("ERROR: Catalog item or name not set for lab code %s." % (labCode))
     printback()
     printfooter()
     exit()
   if environment == "":
     printheader()
-    print "ERROR: No environment set for lab code " + labCode
+    prerror("ERROR: No environment set for lab code %s." % (labCode))
     printback()
     printfooter()
     exit()
@@ -460,7 +464,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     envirURL = "https://labs.opentlc.com"
   else:
     printheader()
-    print "ERROR: Invalid environment " + environment
+    prerror("ERROR: Invalid environment %s." % (environment))
     printback()
     printfooter()
     exit()
@@ -471,48 +475,49 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     cfuser = config.get('guidgrabber', 'cfuser')
     cfpass = config.get('guidgrabber', 'cfpass')
     printheader()
-    print "<center>Please wait, looking for GUIDs...</center>"
+    print "<center>Please wait, looking for GUIDs..."
     print "<pre>"
+    if os.path.exists(allGuidsCSV):
+      os.remove(allGuidsCSV)
     execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
     print "</pre>"
     if not os.path.exists(allGuidsCSV):
-      print "<center>ERROR: Updating GUIDs failed in environment <b>%s</b>.</center>" % environment
+      prerror("ERROR: Updating GUIDs failed in environment <b>%s</b>." % (environment))
     else:
       num_lines = sum(1 for line in open(allGuidsCSV)) - 1
       if num_lines < 1:
-        print "<center>We were able to find the catalog and catalog item, however it appears you do not have any services deployed in <b>%s</b> under your account <b>%s</b>.  Did you forget to run <b>order_svc.sh</b>?</center>" % (environment, profile)
+        print "We were able to find the catalog and catalog item, however it appears you do not have any services deployed in <b>%s</b> under your account <b>%s</b>.  Did you forget to run <b>order_svc.sh</b>?" % (environment, profile)
       else:
-        print "<center>"
         print "Success! <b>%s</b> GUIDs defined for lab <b>%s</b><br>" % (str(num_lines), labCode)
         printback2()
         print "<button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
-        print "</center>"
+    print "</center>"
     printfooter()
     exit()
   elif operation == "deploy_labs":
     if 'num_instances' not in form:
       printheader()
-      print "ERROR: No number of instances provided."
+      prerror("ERROR: No number of instances provided.")
       printback()
       printfooter()
       exit()
     num_instances = form.getvalue('num_instances')
     if 'cfpass' not in form:
       printheader()
-      print "ERROR: CloudForms password not provided."
+      prerror("ERROR: CloudForms password not provided.")
       printback()
       printfooter()
       exit()
     cfpass = form.getvalue('cfpass')
     if not re.match("^[0-9]+$", num_instances):
       printheader()
-      print "ERROR: Number of instances must be a number <= 50.<br><center>"
+      prerror("ERROR: Number of instances must be a number <= 50.")
       printback()
       printfooter()
       exit()
     if int(num_instances) > 50:
       printheader()
-      print "ERROR: Number of instances must be a number <= 50.<br><center>"
+      prerror("ERROR: Number of instances must be a number <= 50.")
       printback()
       printfooter()
       exit()
@@ -527,7 +532,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
   elif operation == "delete_instances":
     if 'cfpass' not in form:
       printheader()
-      print "ERROR: CloudForms password not provided."
+      prerror("ERROR: CloudForms password not provided.")
       printback()
       printfooter()
       exit()
@@ -544,23 +549,35 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     exit()
   else:
     printheader()
-    print "ERROR: Invalid Operation."
+    prerror("ERROR: Invalid Operation.")
     printback()
     printfooter()
     exit()
 elif operation == "manage_guid":
   if 'labcode' not in form or 'guid' not in form:
     printheader()
-    print "ERROR: No labcode and/or guid provided."
+    prerror("ERROR: No labcode and/or guid provided.")
     printback()
     printfooter()
     exit()
   labCode = form.getvalue('labcode')
   guid = form.getvalue('guid')
+  locked = False
+  assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
+  if os.path.exists(assignedCSV):
+    with open(assignedCSV) as ipfile:
+      iplocks = csv.DictReader(ipfile)
+      for row in iplocks:
+        if row['guid'] == guid:
+          ipaddr = row['ipaddr']
+          if ipaddr == "locked":
+            locked = True
+          break
   printheader()
   print "<center><table>"
   print "<tr><td style='font-size: .6em;' colspan=2>Choose a operation for GUID <b>%s</b>, <b>%s</b>:</td></tr>" % (guid, profile)
-  print "<tr><td style='font-size: .6em;'><a href=%s?operation=lock_guid&guid=%s&labcode=%s>Lock GUID Availability</a> - Remove GUID from available pool. This will release current user (if any) as well!</td></tr>" % (myurl, guid, labCode)
+  if not locked:
+    print "<tr><td style='font-size: .6em;'><a href=%s?operation=lock_guid&guid=%s&labcode=%s>Lock GUID Availability</a> - Remove GUID from available pool. This will release current user (if any) as well!</td></tr>" % (myurl, guid, labCode)
   print "<tr><td style='font-size: .6em;'><a href=%s?operation=release_guid&guid=%s&labcode=%s>Release GUID</a> - Make GUID generally available even if already in use <font color=red>(Danger!)</font></td></tr>" % (myurl, guid, labCode)
   print "<tr><td colspan=2 align=center>"
   printback3(labCode)
@@ -571,7 +588,7 @@ elif operation == "manage_guid":
 elif operation == "lock_guid" or operation == "release_guid":
   if 'labcode' not in form or 'guid' not in form:
     printheader()
-    print "ERROR: No labcode and/or guid provided."
+    prerror("ERROR: No labcode and/or guid provided.")
     printback()
     printfooter()
     exit()
@@ -581,7 +598,7 @@ elif operation == "lock_guid" or operation == "release_guid":
   printheader()
   if os.path.exists(assignedCSV):
     regex = '/%s/d' % guid
-    ret = call(["/bin/sed", "-i", regex, assignedCSV], stderr=None)
+    execute(["/bin/sed", "-i", regex, assignedCSV], quiet=True)
   if operation == "lock_guid":
     if not os.path.exists(assignedCSV):
       ln = '"guid","ipaddr"\n'
@@ -602,7 +619,7 @@ elif operation == "lock_guid" or operation == "release_guid":
   exit()
 else:
   printheader()
-  print "ERROR: Invalid operation."
+  prerror("ERROR: Invalid operation.")
   printback()
   printfooter()
   exit()

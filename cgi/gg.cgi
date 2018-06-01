@@ -130,8 +130,6 @@ sslVerify = True
 ggetc = "/var/www/guidgrabber/etc/"
 
 profileDir = ggetc + "/" + profile
-if not os.path.isdir(profileDir):
-  os.mkdir(profileDir)
 labConfigCSV = profileDir + "/labconfig.csv"
 
 if not os.path.isfile(labConfigCSV):
@@ -173,8 +171,8 @@ if operation == "requestguid":
     for row in labCodes:
       if row['code'].startswith("#"):
         continue
-      gt = ggetc + profile + "-availableguids-" + row['code'] + ".csv"
-      if os.path.exists(gt):
+      assignedCSV = profileDir + "/availableguids-" + row['code'] + ".csv"
+      if os.path.exists(assignedCSV):
         foundlabs = True
         fl[row['code']] = row['description']
   printheader()
