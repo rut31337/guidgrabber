@@ -394,7 +394,7 @@ elif operation == "showguid":
   if labSSHkey != "":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
     print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
-  if bastion != "":
+  if bastion != "" and bastion != "None":
     bastion = bastion.replace('REPL', guid)
     if labUser != "":
       print "<li>The generic SSH login for this lab is <b>%s</b></li>" % labUser
@@ -407,8 +407,12 @@ elif operation == "showguid":
       lk = ""
     print "<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>[lab-user@localhost ~]$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)
   else:
-    print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre>If lab requires the use of the SSH command it would look like this:<br><pre>ssh host-{0}.rhpds.opentlc.com</pre><b>Note:</b>These are <b>just examples</b>, please consult the lab instructions for actual host names and URLs.</li>".format(guid))
-  if urls != "":
+    if urls != "None":
+      print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
+    if bastion != "None":
+      print ("<li>If lab requires the use of the SSH command it would look like this:<br><pre>ssh host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
+    #print "<li><b>Note:</b>These are <b>just examples</b>, please consult the lab instructions for actual host names and URLs.</li>"
+  if urls != "" and urls != "None":
     print "<li>The following URLs will be used in your lab environment. Please only access these links when the lab instructions specify to do so:<ul>"
     for u in urls.split(";"):
       u = u.replace('REPL', guid)
