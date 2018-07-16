@@ -77,7 +77,9 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     print "<tr><td align=right style='font-size: 0.6em;'><b>Lab Code (Alphanumeric Only)*:</b></td><td><input type='text' name='labcode' size='20'></td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Lab Name*:</b></td><td><input type='text' name='labname' size='80' value='%s'></td></tr>" %  labname
   print "<tr><td align=right style='font-size: 0.6em;'><b>Lab Key*:</b></td><td><input type='text' name='labkey' size='20' value='%s'></td></tr>" % labkey
-  print "<tr><td align=center style='font-size: 0.6em;' colspan=2>NOTE: Catalog and item names must match exactly with what is in CloudForms!</td></tr>"
+  print "<tr><td align=center style='font-size: 0.6em;' colspan=2><b>NOTE:</b> For all fields specifying FQDN or URL you can use the string <b>REPL</b> which will be replaced by GUID (ex. bastion-REPL.rhpds.opentlc.com)</td></tr>"
+  print "<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>"
+  print "<tr><td align=center style='font-size: 0.6em;' colspan=2><b>NOTE:</b> Catalog and item names must match exactly with what is in CloudForms!</td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Catalog Name*:</b></td><td><input type='text' name='catname' size='20' value='%s'></td></tr>" % catname
   print "<tr><td align=right style='font-size: 0.6em;'><b>Catalog Item*:</b></td><td><input type='text' name='catitem' size='20' value='%s'></td></tr>" % catitem
   if environment == "opentlc":
@@ -87,14 +89,16 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     opc = ""
     rhc = "checked"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Environment*:</b></td><td style='font-size: 0.6em;'><input type='radio' name='environment' value='rhpds' " + rhc + ">RHPDS<input type='radio' name='environment' value='opentlc' " + opc + ">OPENTLC</td></tr>"
-  print "<tr><td align=center style='font-size: 0.6em;' colspan=2>Use <b>REPL</b> in FQDN and URLs to be replaces by GUID (ex. bastion-REPL.rhpds.opentlc.com)</td></tr>"
+  print "<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>"
   print "<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH in your GUID page</td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Bastion FQDN:</b></td><td><input type='text' name='bastion' size='40' value='%s'></td></tr>" % bastion
-  print "<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about URLs in your GUID page</td></tr>"
-  print "<tr><td align=right style='font-size: 0.6em;'><b>Semicolon Delimited List of Lab URLs (ex. https://www-REPL.rhpds.opentlc.com):</b></td><td><textarea cols='80' name='laburls'>%s</textarea></td></tr>" % laburls
-  print "<tr><td align=right style='font-size: 0.6em;'><b>Lab User Login:</b></td><td><input type='text' name='labuser' size='80' value='%s'></td></tr>" % labuser
   print "<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH keys.</td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Lab SSH Key URL:</b></td><td><input type='text' name='labsshkey' size='80' value='%s'></td></tr>" % labsshkey
+  print "<tr><td align=right style='font-size: 0.6em;'><b>Lab User Login:</b></td><td><input type='text' name='labuser' size='80' value='%s'></td></tr>" % labuser
+  print "<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>"
+  print "<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about URLs in your GUID page</td></tr>"
+  print "<tr><td align=right style='font-size: 0.6em;'><b>Semicolon Delimited List of Lab URLs (ex. https://www-REPL.rhpds.opentlc.com):</b></td><td><textarea cols='80' name='laburls'>%s</textarea></td></tr>" % laburls
+  print "<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Lab Documentation URL:</b></td><td><input type='text' name='docurl' size='80' value='%s'></td></tr>" % docurl
   print "<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='blueprint' size='80' value='%s'></td></tr>" % blueprint
   print '<tr><td colspan=2 align=center>'
