@@ -387,11 +387,11 @@ elif operation == "showguid":
   print "<center><h2>Welcome to: %s</h2><h3>Your assigned lab GUID is:</h3><table border=1><tr><td align=center><font size='7'><pre>%s</pre></font></td></tr></table></center>" % (description,guid)
   print "Let's get started! Please read these instructions carefully before starting to have the best lab experience:"
   print "<ul><li>Save the above <b>GUID</b> as you will need it to access your lab's systems from your workstation.</li>"
-  if docURL != "":
+  if docURL != "" and docURL != "None":
     docURL = docURL.replace('REPL', guid)
     print "<li>Open the lab guide by clicking <a href='%s' target='_blank'>here</a></li>" % docURL
   print "<li>Consult the lab guide instructions <i>before</i> attempting to connect to the lab environment.</li>"
-  if labSSHkey != "":
+  if labSSHkey != "" and labSSHkey != "None":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
     print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
   if bastion != "" and bastion != "None":
@@ -401,15 +401,15 @@ elif operation == "showguid":
       lu = "%s@" % labUser
     else:
       lu = ""
-    if labSSHkey != "":
+    if labSSHkey != "" and labSSHkey != "None":
       lk = "-i /path/to/keyfile.pem "
     else:
       lk = ""
     print "<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>[lab-user@localhost ~]$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)
   else:
-    if urls != "None":
-      print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
-    if bastion != "None":
+    #if urls != "None":
+    #  print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
+    if bastion != "" and bastion != "None":
       print ("<li>If lab requires the use of the SSH command it would look like this:<br><pre>ssh host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
     #print "<li><b>Note:</b>These are <b>just examples</b>, please consult the lab instructions for actual host names and URLs.</li>"
   if urls != "" and urls != "None":
@@ -422,7 +422,7 @@ elif operation == "showguid":
         print ("<li><a href='{0}' target='_blank'>{0}</a></li>".format(u))
     print "<li>Note: The lab guide may specify other host names and/or URLs.</li>"
     print "</ul>"
-  if bastion == "" and urls == "":
+  if bastion == "None" and urls == "None":
     print "<li>Please consult the lab guide for any host names and/or URLs that you may need to connect to.</li>"
   if 'appid' in form:
     appid = form.getvalue('appid')
