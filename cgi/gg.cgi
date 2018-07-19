@@ -90,7 +90,7 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
 
 def printfooter(operation="requestguid"):
   if operation == "showguid":
-    includehtml('footer2.inc')
+    includehtml('footer.inc')
   else:
     includehtml('footer.inc')
   print '</body>'

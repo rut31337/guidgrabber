@@ -57,10 +57,11 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
   includehtml('head_mgr.inc')
   print '</head>'
   includehtml('topbar.inc')
+  print '<center><a href="/gg/manager.cgi">Home</a></center>'
   includehtml('textarea_mgr.inc')
 
 def printfooter(operation="none"):
-  includehtml('footer.inc')
+  includehtml('footer2.inc')
   print '</body>'
   print '</html>'
   exit()
