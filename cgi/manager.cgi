@@ -83,13 +83,20 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print "<tr><td align=center style='font-size: 0.6em;' colspan=2><b>NOTE:</b> Catalog and item names must match exactly with what is in CloudForms!</td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Catalog Name*:</b></td><td><input type='text' name='catname' size='20' value='%s'></td></tr>" % catname
   print "<tr><td align=right style='font-size: 0.6em;'><b>Catalog Item*:</b></td><td><input type='text' name='catitem' size='20' value='%s'></td></tr>" % catitem
+  opc = ""
+  rhc = ""
+  spp = ""
   if environment == "opentlc":
     opc = "checked"
-    rhc = ""
-  else:
-    opc = ""
+  elif environment == "rhpds":
     rhc = "checked"
-  print "<tr><td align=right style='font-size: 0.6em;'><b>Environment*:</b></td><td style='font-size: 0.6em;'><input type='radio' name='environment' value='rhpds' " + rhc + ">RHPDS<input type='radio' name='environment' value='opentlc' " + opc + ">OPENTLC</td></tr>"
+  elif environment == "spp":
+    spp = "checked"
+  print "<tr><td align=right style='font-size: 0.6em;'><b>Environment*:</b></td><td style='font-size: 0.6em;'>"
+  print "<input type='radio' name='environment' value='rhpds' " + rhc + ">RHPDS"
+  print "<input type='radio' name='environment' value='opentlc' " + opc + ">OPENTLC"
+  print "<input type='radio' name='environment' value='spp' " + spp + ">SPP"
+  print "</td></tr>"
   print "<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>"
   print "<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH in your GUID page</td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Bastion FQDN:</b></td><td><input type='text' name='bastion' size='40' value='%s'></td></tr>" % bastion
@@ -470,6 +477,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     envirURL = "https://rhpds.redhat.com"
   elif environment == "opentlc":
     envirURL = "https://labs.opentlc.com"
+  elif environment == "spp":
+    envirURL = "https://spp.opentlc.com"
   else:
     printheader()
     prerror("ERROR: Invalid environment %s." % (environment))
