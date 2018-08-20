@@ -66,7 +66,7 @@ def printfooter(operation="none"):
   print '</html>'
   exit()
 
-def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint=""):
+def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared=""):
   print "<center><table>"
   if operation == 'create_lab':
     print '<tr><td colspan=2 align=center><p style="color: black; font-size: 0.6em;">There are no labs set up for your user <b>' + profile + '</b> please fill out this form to create one:</p></td></tr>'
@@ -97,6 +97,9 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print "<input type='radio' name='environment' value='opentlc' " + opc + ">OPENTLC"
   print "<input type='radio' name='environment' value='spp' " + spp + ">SPP"
   print "</td></tr>"
+
+  print "<tr><td align=right style='font-size: 0.6em;'><b>Shared User Count (AAD Shared Only):</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared 
+
   print "<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>"
   print "<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH in your GUID page</td></tr>"
   print "<tr><td align=right style='font-size: 0.6em;'><b>Bastion FQDN:</b></td><td><input type='text' name='bastion' size='40' value='%s'></td></tr>" % bastion
@@ -134,7 +137,7 @@ profileDir = ggetc + "/" + profile
 if not os.path.isdir(profileDir):
   os.mkdir(profileDir)
 labConfigCSV = profileDir + "/labconfig.csv"
-labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint\n"
+labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared\n"
 
 form = cgi.FieldStorage()
 if 'operation' in form:
@@ -263,8 +266,9 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   labUser = form.getvalue('labuser')
   labSSHkey = form.getvalue('labsshkey')
   environment = form.getvalue('environment')
+  shared = form.getvalue('shared')
   blueprint = form.getvalue('blueprint')
-  ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint)
+  ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared)
   with open(labConfigCSV, "a") as conffile:
     conffile.write(ln)
   ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
@@ -315,8 +319,10 @@ elif operation == "print_lab":
     labcodes = csv.DictReader(csvFile)
     for row in labcodes:
       if row['code'] == labCode:
+        if 'shared' not in row:
+          row['shared'] = ""
         printheader()
-        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
+        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'])
         printfooter()
         exit()
   printheader()
@@ -344,7 +350,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     if operation == "del_lab":
       for row in labcodes:
         if row['code'] != labCode:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'])
           f.write(out)
       if os.path.exists(allGuidsCSV):
         os.remove(allGuidsCSV)
@@ -364,9 +370,10 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           labSSHkey = form.getvalue('labsshkey')
           environment = form.getvalue('environment')
           blueprint = form.getvalue('blueprint')
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint)
+          shared = form.getvalue('shared')
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared)
         else:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], shared['shared'])
         f.write(out)
     f.close()
     redirectURL = "%s?operation=none" % (myurl)
@@ -453,6 +460,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
   catName = ""
   catItem = ""
   environment = ""
+  shared = ""
+  labuser = "lab-user"
   with open(labConfigCSV) as csvFile:
     labcodes = csv.DictReader(csvFile)
     for row in labcodes:
@@ -460,6 +469,10 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         catName = row['catname']
         catItem = row['catitem']
         environment = row['environment']
+        if row['labuser'] != "" and row['labuser'] != "None":
+          labuser = row['labuser']
+        if 'shared' in row and row['shared'] != "None":
+          shared = row['shared']
         break
   if catName == "" or catItem == "":
     printheader()
@@ -486,29 +499,43 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printfooter()
     exit()
   if operation == "get_guids":
-    getguids = ggbin + "getguids.py"
-    config = ConfigParser.ConfigParser()
-    config.read(cfgfile)
-    cfuser = config.get('guidgrabber', 'cfuser')
-    cfpass = config.get('guidgrabber', 'cfpass')
     printheader()
-    print "<center>Please wait, looking for GUIDs..."
-    print "<pre>"
     if os.path.exists(allGuidsCSV):
       os.remove(allGuidsCSV)
-    execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
-    print "</pre>"
-    if not os.path.exists(allGuidsCSV):
-      prerror("ERROR: Updating GUIDs failed in environment <b>%s</b>." % (environment))
+    if shared != "" and shared != "None":
+      print "<center>Creating %s shared users..." % shared
+      with open(allGuidsCSV, "w") as agc:
+        ln = '"guid","appid","servicetype"\n'
+        agc.write(ln)
+        i = 1
+        shr = int(shared)
+        while i <= shr:
+          user = labuser + str(i)
+          ln = '"%s","%s","%s"\n' % (user, "na", "shared")
+          i = i + 1
+          agc.write(ln)
+      print "<br><button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
     else:
-      num_lines = sum(1 for line in open(allGuidsCSV)) - 1
-      if num_lines < 1:
-        print "We were able to find the catalog and catalog item, however it appears you do not have any services deployed in <b>%s</b> under your account <b>%s</b>.  Did you forget to run <b>order_svc.sh</b>?" % (environment, profile)
+      print "<center>Please wait, looking for GUIDs..."
+      print "<pre>"
+      getguids = ggbin + "getguids.py"
+      config = ConfigParser.ConfigParser()
+      config.read(cfgfile)
+      cfuser = config.get('guidgrabber', 'cfuser')
+      cfpass = config.get('guidgrabber', 'cfpass')
+      execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
+      print "</pre>"
+      if not os.path.exists(allGuidsCSV):
+        prerror("ERROR: Updating GUIDs failed in environment <b>%s</b>." % (environment))
       else:
-        print "Success! <b>%s</b> GUIDs defined for lab <b>%s</b><br>" % (str(num_lines), labCode)
-        printback2()
-        print "<button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
-    print "</center>"
+        num_lines = sum(1 for line in open(allGuidsCSV)) - 1
+        if num_lines < 1:
+          print "We were able to find the catalog and catalog item, however it appears you do not have any services deployed in <b>%s</b> under your account <b>%s</b>.  Did you forget to deploy lab instances?" % (environment, profile)
+        else:
+          print "Success! <b>%s</b> GUIDs defined for lab <b>%s</b><br>" % (str(num_lines), labCode)
+          printback2()
+          print "<button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
+      print "</center>"
     printfooter()
     exit()
   elif operation == "deploy_labs":

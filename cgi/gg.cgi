@@ -349,6 +349,8 @@ elif operation == "showguid":
     printback()
     printfooter()
     exit()
+  printheader(False, "", "", operation)
+  guid = form.getvalue('guid')
   labCode = form.getvalue('labcode')
   bastion = ""
   docURL = ""
@@ -357,6 +359,7 @@ elif operation == "showguid":
   labUser = ""
   labSSHkey = ""
   found = False
+  guidType = "GUID"
   with open(labConfigCSV) as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -368,8 +371,10 @@ elif operation == "showguid":
         urls = row['urls']
         labUser = row['labuser']
         labSSHkey = row['labsshkey']
+        if 'shared' in row and row['shared'] != "None":
+          guidType = "user"
+          labUser = guid
         break
-  printheader(False, "", "", operation)
   if not found:
     print "Unexpected ERROR: This lab no longer exists. Please contact lab proctor.<br>"
     print "Only if <b>directed by lab proctor</b> click this button: <button onclick='rusure()'>RESET STATION</button>"
@@ -377,16 +382,15 @@ elif operation == "showguid":
     printfooter()
     exit()
   if 'guid' not in form:
-    print "Unexpected ERROR: no GUID found. Please contact lab proctor."
+    print "Unexpected ERROR: no %s found. Please contact lab proctor." % guidType
     printback()
     printfooter()
     exit()
-  guid = form.getvalue('guid')
   print "<center><table border=0>"
   print "<tr><td>"
-  print "<center><h2>Welcome to: %s</h2><h3>Your assigned lab GUID is:</h3><table border=1><tr><td align=center><font size='7'><pre>%s</pre></font></td></tr></table></center>" % (description,guid)
+  print "<center><h2>Welcome to: %s</h2><h3>Your assigned lab %s is:</h3><table border=1><tr><td align=center><font size='7'><pre>%s</pre></font></td></tr></table></center>" % (description,guidType,guid)
   print "Let's get started! Please read these instructions carefully before starting to have the best lab experience:"
-  print "<ul><li>Save the above <b>GUID</b> as you will need it to access your lab's systems from your workstation.</li>"
+  print "<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType
   if docURL != "" and docURL != "None":
     docURL = docURL.replace('REPL', guid)
     print "<li>Open the lab guide by clicking <a href='%s' target='_blank'>here</a></li>" % docURL
@@ -395,8 +399,11 @@ elif operation == "showguid":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
     print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
   if bastion != "" and bastion != "None":
-    bastion = bastion.replace('REPL', guid)
-    if labUser != "":
+    if guidType == "user":
+      bastion = bastion.replace('REPL', "")
+    else:
+      bastion = bastion.replace('REPL', guid)
+    if labUser != "" and labUser != "None":
       print "<li>The generic SSH login for this lab is <b>%s</b></li>" % labUser
       lu = "%s@" % labUser
     else:
@@ -405,7 +412,7 @@ elif operation == "showguid":
       lk = "-i /path/to/keyfile.pem "
     else:
       lk = ""
-    print "<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>[lab-user@localhost ~]$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)
+    print "<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)
   else:
     #if urls != "None":
     #  print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
