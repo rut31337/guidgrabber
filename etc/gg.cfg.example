@@ -1,3 +1,7 @@
-[guidgrabber]
-cfuser: myuser
-cfpass: mypass
+[cloudforms-credentials]
+user: myuser
+password: mypass
+
+[ravello-credentials]
+user: ravello_user@domain.fqdn
+password: ravello_password

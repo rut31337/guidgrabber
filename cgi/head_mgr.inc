@@ -51,3 +51,17 @@ a:active {
     color: blue;
 }
 </style>
+
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<style>
+.w3-btn {
+  font-size: .5em;
+}
+</style>
+
+<style>
+    #link_bar a:link { color:#d0d0d0; }
+    #link_bar a:visited { color:#c0c0c0; }
+    #link_bar a:hover { color:#ffffff; background-color:#000060; }
+    #link_bar a:active { color:#f0f0f0; background-color:#00ff00; }
+</style>

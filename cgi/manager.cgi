@@ -8,6 +8,37 @@ import subprocess
 import sys
 import ConfigParser, os
 import re
+import datetime
+
+def manageApp(client, op, app, runTime=0):
+  status = application_state(app)
+  if op == "start":
+    ate = 3600*runTime
+    exp = {'expirationFromNowSeconds': ate}
+    if status == 'STARTED' or 'STARTING' in status:
+      print "App %s is in state %s, extending runtime by %s hours.<br>" % (str(app['id']), status, str(runTime))
+      client.set_application_expiration(app['id'], exp)
+    elif 'STOPPED' in status:
+      if runTime != 0:
+        client.set_application_expiration(app['id'], exp)
+      print "Starting appID %s with runtime of %s hours.<br>" % (str(app['id']), str(runTime))
+      client.start_application(app['id'])
+    elif 'STOPPING' in status:
+      print "No action possible, appID %s, is in state %s.<br>" % (str(app['id']), status)
+      return True
+    else:
+      print "Warning: appID %s is in an unhandled state of %s.<br>" % (str(app['id']), status)
+  elif op == "stop":
+    if 'STARTED' in status:
+      print "Stopping appID %s.<br>" % (str(app['id']))
+      client.stop_application(app['id'])
+    elif 'STOPPED' in status:
+      print "appID %s is already stopped.<br>" % (str(app['id']))
+    elif 'STARTING' in status or 'STOPPING' in status:
+      print "No action for appID %s, it is in transient state %s.<br>" % (str(app['id']), status)
+      return True
+    else:
+      print "Warning: appID %s is in an unhandled state of %s.<br>" % (str(app['id']), status)
 
 def execute(command, quiet=False):
   process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -28,16 +59,16 @@ def execute(command, quiet=False):
     prerror("ERROR: Command failed with return code (%s)<br>OUT(%s)" % (exitCode, output))
 
 def prerror(msg):
-  print "<center>%s<br>" % msg
+  print "<center>%s<br></center>" % msg
 
 def printback():
-  print '<button onclick="goBack()"><&nbsp;Back</button>'
+  print '<button class="w3-btn w3-white w3-border w3-padding-small" onclick="goBack()"><&nbsp;Back</button>'
 
 def printback2():
-  print "<button onclick=\"location.href='%s'\" type=button><&nbsp;Back</button>" % myurl
+  print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s'\" type=button><&nbsp;Back</button>" % myurl
 
 def printback3(labCode):
-  print "<button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button><&nbsp;Back</button>" % (myurl, labCode)
+  print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button><&nbsp;Back</button>" % (myurl, labCode)
 
 def callredirect(redirectURL, waittime=0):
   print '<head>'
@@ -57,10 +88,11 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
   includehtml('head_mgr.inc')
   print '</head>'
   includehtml('topbar.inc')
-  print '<center><a href="/gg/manager.cgi">Home</a></center>'
   includehtml('textarea_mgr.inc')
 
 def printfooter(operation="none"):
+  if operation is not "mainmenu":
+    print '<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\'/gg/manager.cgi\'">Home</button></center>'
   includehtml('footer2.inc')
   print '</body>'
   print '</html>'
@@ -114,7 +146,7 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print "<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='blueprint' size='80' value='%s'></td></tr>" % blueprint
   print '<tr><td colspan=2 align=center>'
   printback2()
-  print '<input type="submit" value="Next&nbsp;>"></td></tr></table>'
+  print '<input class="w3-btn w3-white w3-border w3-padding-small" type="submit" value="Next&nbsp;>"></td></tr></table>'
   print "</form></td></tr>"
   print '</table></center>'
 
@@ -175,7 +207,7 @@ if operation == "none":
     print "<tr><td style='font-size: .7em;'><a href=%s?operation=delete_lab>Delete Lab Configuration</a></td></tr>" % myurl
     print "<tr><td colspan=2>&nbsp;</td></tr><tr><td style='font-size: .6em;' colspan=2>Share this link with your attendees:<br><b>%s?profile=%s</b><br>TIP: Use bit.ly or similar tool to shorten link.</td></tr>" % (ggurl, profile)
   print '</table></center>'
-  printfooter(operation)
+  printfooter("mainmenu")
   exit()
 elif operation == "create_new_lab_form":
   printheader()
@@ -225,7 +257,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     print "<tr><td align=right style='font-size: 0.6em;'><b>Password for user %s:</b></td><td><input type='password' name='cfpass' size='8'></td></tr>" % (profile)
   print '<tr><td colspan=2 align=center>'
   printback2()
-  print '<input type="submit" value="Next&nbsp;>"></td></tr>'
+  print '<input class="w3-btn w3-white w3-border w3-padding-small" type="submit" value="Next&nbsp;>"></td></tr>'
   print '</form></table></center>'
   printfooter(operation)
   exit()
@@ -329,6 +361,51 @@ elif operation == "print_lab":
   prerror("ERROR: Labcode %s not found.<br><center>" % (labCode))
   printfooter()
   exit()
+elif operation == "power_on" or operation == "power_off":
+  printheader()
+  if 'labcode' not in form:
+    print "ERROR, no labcode provided."
+    printback()
+    printfooter()
+    exit ()
+  labCode = form.getvalue('labcode')
+  allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
+  if not os.path.exists(allGuidsCSV):
+    msg=urllib.quote("ERROR, No guids for lab code <b>{0}</b> exist.".format(labCode))
+    redirectURL="%s?profile=%s&msg=%s" % (myurl,profile,msg)
+    printheader(True, redirectURL, "0", operation)
+    exit()
+  config = ConfigParser.ConfigParser()
+  config.read(cfgfile)
+  ravUser = config.get('ravello-credentials', 'user')
+  ravPw = config.get('ravello-credentials', 'password')
+  from ravello_sdk import *
+  client = RavelloClient()
+  try:
+    client.login(ravUser, ravPw)
+  except:
+    prerror('Error: Unable to connect to Ravello or invalid user credentials')
+  with open(allGuidsCSV) as allfile:
+    allf = csv.DictReader(allfile)
+    for allrow in allf:
+      if 'servicetype' in allrow and allrow['servicetype'] == "ravello":
+        appID = allrow['appid']
+        try:
+	  app = client.get_application(appID)
+        except:
+          prerror('Strange appid %s not found.' % (str(appID)))
+          continue
+        if operation == "power_on":
+          if 'runtime' in form:
+            runTime = int(form.getvalue('runtime'))
+          else: 
+            runTime = 8
+          manageApp(client, "start", app, runTime)
+        elif operation == "power_off":
+          manageApp(client, "stop", app, 0)
+  printback()
+  printfooter()
+  exit()
 elif operation == "view_lab" or operation == "del_lab" or operation == "update_lab":
   if 'labcode' not in form:
     printheader()
@@ -384,6 +461,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   tot = 0
   rowc = 0
   maxrow = 10
+  ravello = False
   if not os.path.exists(allGuidsCSV):
     msg=urllib.quote("ERROR: No guids for lab code <b>{0}</b> exist.<br><center>".format(labCode))
     redirectURL="%s?msg=%s" % (myurl, msg)
@@ -392,9 +470,28 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     exit()
   printheader()
   print "<center><b>Lab %s<b><table border=1 style='border-collapse: collapse;'>" % labCode
+  ravello = False
   with open(allGuidsCSV) as allfile:
     allf = csv.DictReader(allfile)
     for allrow in allf:
+      if 'servicetype' in allrow and allrow['servicetype'] == 'ravello':
+        ravello = True
+  if ravello:
+    config = ConfigParser.ConfigParser()
+    config.read(cfgfile)
+    ravUser = config.get('ravello-credentials', 'user')
+    ravPw = config.get('ravello-credentials', 'password')
+    from ravello_sdk import *
+    client = RavelloClient()
+    try:
+      client.login(ravUser, ravPw)
+    except:
+      prerror('Error: Unable to connect to Ravello or invalid user credentials')
+  with open(allGuidsCSV) as allfile:
+    allf = csv.DictReader(allfile)
+    for allrow in allf:
+      status = ""
+      runTime = ""
       tot = tot + 1
       if rowc == 0:
         print "<tr>"
@@ -407,6 +504,21 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
       print "<tr><td style='font-size: 0.6em;' align=center><a href='%s?operation=manage_guid&guid=%s&labcode=%s'>%s</b></td></tr>" % (myurl, guid, labCode, guid)
       if serviceType == "ravello":
         appID = allrow['appid']
+        try:
+          app = client.get_application(appID)
+        except:
+          prerror('Strange appid %s not found.' % (str(appID)))
+        status = application_state(app)
+        if app['published']:
+          deployment = app['deployment']
+          if deployment['totalActiveVms'] > 0:
+            if not deployment.has_key('expirationTime'):
+              runTime = "Never"
+            else:
+              expirationTime = datetime.datetime.utcfromtimestamp(deployment['expirationTime'] / 1e3)
+              delta = expirationTime - datetime.datetime.utcnow()
+              (h,m) = str(delta).split(':')[:2]
+              runTime = "%s:%s" % (h, m)
         ravurl = "https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid, appID)
         print "<tr><td style='font-size: 0.6em;'><a href='%s' target='_blank'>Lab Dashboard</a></td></tr>" % ravurl
       assigned = False
@@ -430,6 +542,16 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
         print "<tr><td align=center style='font-size: 0.6em; color: red;'>Locked</td></tr>"
       else:
         print "<tr><td align=center style='font-size: 0.6em; color: red;'>Not Assigned</td></tr>"
+      if status != "":
+        if status == "STARTED":
+          color = "green"
+        elif status == "STOPPED":
+          color = "red"
+        else:
+          color = "gray"
+        print "<tr><td align=center style='font-size: 0.6em; color: %s;'>%s</td></tr>" % (color, status)
+      if runTime != "":
+        print "<tr><td align=center style='font-size: 0.6em;'>Time Left: %s</td></tr>" % (runTime)
       print "</table>"
       print "</td>"
       rowc = rowc + 1
@@ -443,8 +565,36 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   avl = tot - asg
   print "<th style='font-size: 0.6em;'>Available Labs:</th><td style='font-size: 0.6em;'>%s</td></tr>" % avl
   print "<tr><td colspan=6 align=center>"
+  if ravello:
+    print """
+<script>
+function pwrOnWarn() {
+    var runtime = prompt("Enter new runtime (in hours) and click OK.", "8");
+    if (runtime == null || runtime == "") {
+      txt = "Cancelled";
+    } else {
+      window.location.href = "%s?profile=%s&operation=power_on&labcode=%s&runtime=" + runtime;
+    }
+}
+</script>
+""" % (myurl, profile, labCode)
+    print """
+<script>
+function pwrOffWarn() {
+    var txt;
+    if (confirm("DANGER: Are you sure you wish to immediately power OFF all of your instances?  If you are sure click OK below otherwise, click Cancel.")) {
+      window.location.href = "%s?profile=%s&operation=power_off&labcode=%s";
+    }
+}
+</script>
+""" % (myurl, profile, labCode)
+    print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick='pwrOnWarn()'>Power ON All Instances/Extend Runtime</button>"
+    print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick='pwrOffWarn()'>Power OFF All Instances</button>"
+    print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=get_guids&labcode=%s'\" type=button>Update Available Lab GUIDs</button>" % (myurl, labCode)
+  print "</td></tr>"
+  print "<tr><td colspan=6 align=center>"
   printback2()
-  print "<button onclick=\"history.go(0)\" type=button>Refresh</button></td></tr>"
+  print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"history.go(0)\" type=button>Refresh</button></td></tr>"
   print "</table></center>"
   printfooter(operation)
   exit()
@@ -514,15 +664,15 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           ln = '"%s","%s","%s"\n' % (user, "na", "shared")
           i = i + 1
           agc.write(ln)
-      print "<br><button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
+      print "<br><button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
     else:
       print "<center>Please wait, looking for GUIDs..."
       print "<pre>"
       getguids = ggbin + "getguids.py"
       config = ConfigParser.ConfigParser()
       config.read(cfgfile)
-      cfuser = config.get('guidgrabber', 'cfuser')
-      cfpass = config.get('guidgrabber', 'cfpass')
+      cfuser = config.get('cloudforms-credentials', 'user')
+      cfpass = config.get('cloudforms-credentials', 'password')
       execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
       print "</pre>"
       if not os.path.exists(allGuidsCSV):
@@ -534,7 +684,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         else:
           print "Success! <b>%s</b> GUIDs defined for lab <b>%s</b><br>" % (str(num_lines), labCode)
           printback2()
-          print "<button onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
+          print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)
       print "</center>"
     printfooter()
     exit()
@@ -587,7 +737,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     execute([retiresvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-n"])
     print "</pre><center>Retirement Queued.<br>"
     printback2()
-    print "<button onclick=\"location.href='%s?operation=dellc&labcode=%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode)
+    print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=dellc&labcode=%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode)
     print "</center>"
     printfooter()
     exit()
