@@ -450,7 +450,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           shared = form.getvalue('shared')
           out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared)
         else:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], shared['shared'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'])
         f.write(out)
     f.close()
     redirectURL = "%s?operation=none" % (myurl)
@@ -709,7 +709,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       printback()
       printfooter()
       exit()
-    if int(num_instances) > 50:
+    if int(num_instances) < 1 or int(num_instances) > 50 and profile != "rhtemgr":
       printheader()
       prerror("ERROR: Number of instances must be a number <= 50.")
       printback()
