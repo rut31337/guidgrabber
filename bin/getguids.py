@@ -44,7 +44,7 @@ def apicall(token, url, op, inp = None ):
 
 token = gettok()
 
-url = "/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name%3D" + catalogName
+url = "/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name='" + catalogName + "'"
 cats = apicall(token, url, "get", inp = None )
 if not cats:
   print "ERROR: No such catalog " + catName
@@ -53,7 +53,7 @@ else:
   catalogID = str(cats[0]['id'])
   #print "Catalog ID: " + catalogID
 
-url = "/api/service_templates?attributes=service_template_catalog_id,id,name&expand=resources&filter%5B%5D=name=" + itemName + "&filter%5B%5D=service_template_catalog_id%3D" + catalogID
+url = "/api/service_templates?attributes=service_template_catalog_id,id,name&expand=resources&filter%5B%5D=name='" + itemName + "'&filter%5B%5D=service_template_catalog_id='" + catalogID + "'"
 items = apicall(token, url, "get", inp = None )
 if not items:
   print "ERROR: No such item " + itName
@@ -62,18 +62,17 @@ else:
   itemID = str(items[0]['id'])
   #print "Item ID: " + itemID
 
-#surl = "/api/services?attributes=href%2Ctags%2Cname%2Ccustom_attributes%2Coptions&expand=resources&filter%5B%5D=service_template_id%3D" + itemID
-surl = "/api/services?attributes=tags%2Ccustom_attributes&expand=resources&filter%5B%5D=service_template_id%3D" + itemID
+surl = "/api/services?attributes=tags%2Ccustom_attributes&expand=resources&filter%5B%5D=service_template_id='" + itemID + "'"
 
 if userFilter != "":
-  url = "/api/users?expand=resources&filter%5B%5D=userid%3D" + userFilter
+  url = "/api/users?expand=resources&filter%5B%5D=userid='" + userFilter + "'"
   users = apicall(token, url, "get", inp = None )
   if not users:
     print "ERROR: No such user " + userFilter
     exit ()
   else:
     userID = str(users[0]['id'])
-    surl = surl + "&filter%5B%5D=evm_owner_id%3D" + userID
+    surl = surl + "&filter%5B%5D=evm_owner_id='" + userID + "'"
 
 services = apicall(token, surl, "get", inp = None )
 
