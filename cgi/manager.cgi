@@ -611,7 +611,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
   catItem = ""
   environment = ""
   shared = ""
-  labuser = "lab-user"
+  #labuser = "lab-user"
   with open(labConfigCSV) as csvFile:
     labcodes = csv.DictReader(csvFile)
     for row in labcodes:
@@ -619,8 +619,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         catName = row['catname']
         catItem = row['catitem']
         environment = row['environment']
-        if row['labuser'] != "" and row['labuser'] != "None":
-          labuser = row['labuser']
+        #if row['labuser'] != "" and row['labuser'] != "None":
+        #  labuser = row['labuser']
         if 'shared' in row and row['shared'] != "None":
           shared = row['shared']
         break
@@ -654,14 +654,30 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       os.remove(allGuidsCSV)
     if shared != "" and shared != "None":
       print "<center>Creating %s shared users..." % shared
+      getguids = ggbin + "getguids.py"
+      config = ConfigParser.ConfigParser()
+      config.read(cfgfile)
+      cfuser = config.get('cloudforms-credentials', 'user')
+      cfpass = config.get('cloudforms-credentials', 'password')
+      command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly"]
+      out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+      stdout,stderr = out.communicate()
+      if stdout != "" or stdout != "None":
+        guid = stdout.rstrip()
+      else:
+        prerror("ERROR: Could not find a deployed service.")
+        printback()
+        printfooter()
+        exit()
       with open(allGuidsCSV, "w") as agc:
         ln = '"guid","appid","servicetype"\n'
         agc.write(ln)
         i = 1
         shr = int(shared)
         while i <= shr:
-          user = labuser + str(i)
-          ln = '"%s","%s","%s"\n' % (user, "na", "shared")
+          #user = labuser + str(i)
+          user = str(i)
+          ln = '"%s","%s","%s"\n' % (user, guid, "shared")
           i = i + 1
           agc.write(ln)
       print "<br><button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode)

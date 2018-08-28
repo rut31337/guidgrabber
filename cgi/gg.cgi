@@ -371,9 +371,9 @@ elif operation == "showguid":
         urls = row['urls']
         labUser = row['labuser']
         labSSHkey = row['labsshkey']
-        if 'shared' in row and row['shared'] != "None":
-          guidType = "user"
-          labUser = guid
+        if 'shared' in row and row['shared'] != "None" and row['shared'] != "":
+          guidType = "number"
+          #labUser = guid
         break
   if not found:
     print "Unexpected ERROR: This lab no longer exists. Please contact lab proctor.<br>"
@@ -386,25 +386,33 @@ elif operation == "showguid":
     printback()
     printfooter()
     exit()
+  if guidType == "number":
+    if 'appid' in form:
+      sharedGUID = form.getvalue('appid')
   print "<center><table border=0>"
   print "<tr><td>"
-  print "<center><h2>Welcome to: %s</h2><h3>Your assigned lab %s is:</h3><table border=1><tr><td align=center><font size='7'><pre>%s</pre></font></td></tr></table></center>" % (description,guidType,guid)
+  print "<center><h2>Welcome to: %s</h2><table border=1>" % description
+  print "<tr><td align=right>Your assigned lab %s is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (guidType,guid)
+  if guidType == "number":
+    print "<tr><td align=right>Your shared lab GUID is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (sharedGUID)
+  print "</table></center>" 
   print "Let's get started! Please read these instructions carefully before starting to have the best lab experience:"
   print "<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType
+  print "<li>Consult the lab instructions <i>before</i> attempting to connect to the lab environment.</li>"
   if docURL != "" and docURL != "None":
     docURL = docURL.replace('REPL', guid)
-    print "<li>Open the lab guide by clicking <a href='%s' target='_blank'>here</a></li>" % docURL
-  print "<li>Consult the lab guide instructions <i>before</i> attempting to connect to the lab environment.</li>"
+    print "<li>Open the lab instructions by clicking <a href='%s' target='_blank'>here</a></li>" % docURL
   if labSSHkey != "" and labSSHkey != "None":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
     print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
   if bastion != "" and bastion != "None":
-    if guidType == "user":
-      bastion = bastion.replace('REPL', "")
+    if guidType == "number":
+      bastion = bastion.replace('REPL', sharedGUID)
+      bastion = bastion.replace('X', guid)
     else:
       bastion = bastion.replace('REPL', guid)
     if labUser != "" and labUser != "None":
-      print "<li>The generic SSH login for this lab is <b>%s</b></li>" % labUser
+      print "<li>You will need to use the user name <b>%s</b> to log into your lab environment.</li>" % labUser
       lu = "%s@" % labUser
     else:
       lu = ""
@@ -413,6 +421,7 @@ elif operation == "showguid":
     else:
       lk = ""
     print "<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)
+    print "<li>Unless otherwise stated in the lab instructions, the password is: <pre><b>r3dh4t1!</b></pre></li>"
   else:
     #if urls != "None":
     #  print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
@@ -427,18 +436,18 @@ elif operation == "showguid":
         print ("<li>Wildcard DNS entry: <b>{0}</b></li>".format(u))
       else:
         print ("<li><a href='{0}' target='_blank'>{0}</a></li>".format(u))
-    print "<li>Note: The lab guide may specify other host names and/or URLs.</li>"
+    print "<li>Note: The lab instructions may specify other host names and/or URLs.</li>"
     print "</ul>"
   if bastion == "None" and urls == "None":
-    print "<li>Please consult the lab guide for any host names and/or URLs that you may need to connect to.</li>"
-  if 'appid' in form:
+    print "<li>Please consult the lab instructions for any host names and/or URLs that you may need to connect to.</li>"
+  if 'appid' in form and guidType != "number":
     appid = form.getvalue('appid')
-    print "<li>You can access your detailed lab environment information at <a href='https://www.opentlc.com/summit-status/status.php?appid=%s&guid=%s' target='_blank'>here</a></li>" % (appid,guid)
+    #print "<li>You can access your detailed lab environment information at <a href='https://www.opentlc.com/summit-status/status.php?appid=%s&guid=%s' target='_blank'>here</a></li>" % (appid,guid)
     consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
-    print "<li>If <b>required</b> by the lab guide instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL
-  print "<li>To clear the way for the next attendee, please click the below <b>RESET STATION</b> button when you are <i>completely finished</i> with your lab.</li>"
+    print "<li>If <b>required</b> by the lab instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL
+  #print "<li>Please click the below <b>RESET STATION</b> button when you are <i>completely finished</i> with your lab.</li>"
   print "</ul></td></tr></table>"
-  print "<p>If the current lab session is <b>just starting</b> or you are <b>completely finished with your current lab</b> please click the button below to reset this station.</p>"
+  print "<p>When you are <b>completely finished</b> with this lab please click the <b>RESET STATION</b> button below.</p>"
   print "<button onclick='rusure()'>RESET STATION</button>"
   print "</center>"
   printfooter(operation)

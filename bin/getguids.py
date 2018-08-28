@@ -15,6 +15,7 @@ parser.add_argument('--item', help='CloudForms Item Name', required=True)
 parser.add_argument('--ufilter', help='User To Filter Searches To', required=False, default="")
 parser.add_argument('--out', help='File to write CSV into', required=True)
 parser.add_argument('--insecure', help='Use Insecure SSL Cert', action="store_false")
+parser.add_argument('--guidonly', help='Return Only The GUID', action="store_true")
 args = parser.parse_args()
 
 cfurl = args.cfurl
@@ -27,6 +28,7 @@ itemName = urllib.quote(itName)
 userFilter = args.ufilter
 outFile = args.out
 sslVerify = args.insecure
+guidOnly = args.guidonly
 
 def gettok():
   response = requests.get(cfurl + "/api/auth", auth=HTTPBasicAuth(cfuser, cfpass), verify=sslVerify)
@@ -75,6 +77,15 @@ if userFilter != "":
     surl = surl + "&filter%5B%5D=evm_owner_id='" + userID + "'"
 
 services = apicall(token, surl, "get", inp = None )
+
+if guidOnly:
+  guid = ""
+  for svc in services:
+    for cab in svc['custom_attributes']:
+      if cab['name'] == 'GUID':
+        guid = cab['value']
+        print guid
+        exit ()
 
 f = open(outFile, 'w')
 f.write("guid,appid,servicetype\n")
