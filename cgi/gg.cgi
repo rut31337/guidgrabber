@@ -360,6 +360,7 @@ elif operation == "showguid":
   labSSHkey = ""
   found = False
   guidType = "GUID"
+  sharedGUID = ""
   with open(labConfigCSV) as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -393,7 +394,7 @@ elif operation == "showguid":
   print "<tr><td>"
   print "<center><h2>Welcome to: %s</h2><table border=1>" % description
   print "<tr><td align=right>Your assigned lab %s is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (guidType,guid)
-  if guidType == "number":
+  if guidType == "number" and sharedGUID != "":
     print "<tr><td align=right>Your shared lab GUID is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (sharedGUID)
   print "</table></center>" 
   print "Let's get started! Please read these instructions carefully before starting to have the best lab experience:"
@@ -407,7 +408,8 @@ elif operation == "showguid":
     print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
   if bastion != "" and bastion != "None":
     if guidType == "number":
-      bastion = bastion.replace('REPL', sharedGUID)
+      if sharedGUID != "":
+        bastion = bastion.replace('REPL', sharedGUID)
       bastion = bastion.replace('X', guid)
     else:
       bastion = bastion.replace('REPL', guid)
