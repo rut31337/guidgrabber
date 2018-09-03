@@ -71,6 +71,13 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
     callredirect(redirectURL, waittime)
     exit()
   print '<html><head>'
+  print """
+<script>
+if (/Edge/.test(navigator.userAgent)) {
+    alert("We are sorry but, unfortunately, Microsoft browsers are not compatible with our application.");
+}
+</script>
+"""
   if operation == "showguid":
     includehtml('head.inc')
     print_reset()

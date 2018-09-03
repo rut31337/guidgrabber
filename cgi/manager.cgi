@@ -508,19 +508,22 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           app = client.get_application(appID)
         except:
           prerror('Strange appid %s not found.' % (str(appID)))
-        status = application_state(app)
-        if app['published']:
-          deployment = app['deployment']
-          if deployment['totalActiveVms'] > 0:
-            if not deployment.has_key('expirationTime'):
-              runTime = "Never"
-            else:
-              expirationTime = datetime.datetime.utcfromtimestamp(deployment['expirationTime'] / 1e3)
-              delta = expirationTime - datetime.datetime.utcnow()
-              (h,m) = str(delta).split(':')[:2]
-              runTime = "%s:%s" % (h, m)
-        ravurl = "https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid, appID)
-        print "<tr><td style='font-size: 0.6em;'><a href='%s' target='_blank'>Lab Dashboard</a></td></tr>" % ravurl
+        try:
+          status = application_state(app)
+          if app['published']:
+            deployment = app['deployment']
+            if deployment['totalActiveVms'] > 0:
+              if not deployment.has_key('expirationTime'):
+                runTime = "Never"
+              else:
+                expirationTime = datetime.datetime.utcfromtimestamp(deployment['expirationTime'] / 1e3)
+                delta = expirationTime - datetime.datetime.utcnow()
+                (h,m) = str(delta).split(':')[:2]
+                runTime = "%s:%s" % (h, m)
+          ravurl = "https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid, appID)
+          print "<tr><td style='font-size: 0.6em;'><a href='%s' target='_blank'>Lab Dashboard</a></td></tr>" % ravurl
+        except:
+          status = "ERROR: Non-Existant"
       assigned = False
       locked = False
       if os.path.exists(assignedCSV):
@@ -545,7 +548,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
       if status != "":
         if status == "STARTED":
           color = "green"
-        elif status == "STOPPED":
+        elif status == "STOPPED" or status == "ERROR: Non-Existant":
           color = "red"
         else:
           color = "gray"
