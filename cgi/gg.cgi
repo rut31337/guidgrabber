@@ -192,7 +192,7 @@ if operation == "requestguid":
     print '<tr><td><p style="color: black; font-size: 1.2em;">Please choose the lab code for this session (Reload this page if you do not see the option for this lab session in the below dropdown.):</p></td></tr>'
     print "<tr><td><form method='post' action='%s?operation=searchguid'>" % myurl
     print "<table border=0><tr><td><b>Lab Code:</b></td><td><select name='labcode'>"
-    for k in fl:
+    for k in sorted(fl):
       print('<option value="{0}">{0} - {1}</option>'.format(k,fl[k]))
     print "</select></td></tr>"
     print "<tr><td><b>Activation Key:</b></td><td><input type='text' name='actkey'></td></tr>"
