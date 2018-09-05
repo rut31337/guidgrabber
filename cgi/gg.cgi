@@ -368,6 +368,7 @@ elif operation == "showguid":
   found = False
   guidType = "GUID"
   sharedGUID = ""
+  shared = False
   with open(labConfigCSV) as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -381,7 +382,9 @@ elif operation == "showguid":
         labSSHkey = row['labsshkey']
         if 'shared' in row and row['shared'] != "None" and row['shared'] != "":
           guidType = "number"
-          #labUser = guid
+          shared = True
+          if 'appid' in form:
+            sharedGUID = form.getvalue('appid')
         break
   if not found:
     print "Unexpected ERROR: This lab no longer exists. Please contact lab proctor.<br>"
@@ -394,14 +397,11 @@ elif operation == "showguid":
     printback()
     printfooter()
     exit()
-  if guidType == "number":
-    if 'appid' in form:
-      sharedGUID = form.getvalue('appid')
   print "<center><table border=0>"
   print "<tr><td>"
   print "<center><h2>Welcome to: %s</h2><table border=1>" % description
   print "<tr><td align=right>Your assigned lab %s is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (guidType,guid)
-  if guidType == "number" and sharedGUID != "":
+  if shared and sharedGUID != "":
     print "<tr><td align=right>Your shared lab GUID is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (sharedGUID)
   print "</table></center>" 
   print "Let's get started! Please read these instructions carefully before starting to have the best lab experience:"
@@ -414,9 +414,8 @@ elif operation == "showguid":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
     print "<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>"
   if bastion != "" and bastion != "None":
-    if guidType == "number":
-      if sharedGUID != "":
-        bastion = bastion.replace('REPL', sharedGUID)
+    if shared and sharedGUID != "":
+      bastion = bastion.replace('REPL', sharedGUID)
       bastion = bastion.replace('X', guid)
     else:
       bastion = bastion.replace('REPL', guid)
@@ -440,7 +439,10 @@ elif operation == "showguid":
   if urls != "" and urls != "None":
     print "<li>The following URLs will be used in your lab environment. Please only access these links when the lab instructions specify to do so:<ul>"
     for u in urls.split(";"):
-      u = u.replace('REPL', guid)
+      if shared and sharedGUID != "":
+        u = u.replace('REPL', sharedGUID)
+      else:
+        u = u.replace('REPL', guid)
       if u.startswith("*"):
         print ("<li>Wildcard DNS entry: <b>{0}</b></li>".format(u))
       else:
