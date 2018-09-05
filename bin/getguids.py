@@ -49,7 +49,7 @@ def apicall(token, url, op, inp = None ):
 f = open(outFile, 'w')
 f.write("guid,appid,servicetype\n")
 
-if itName != "N/A":
+if itName != "N/A" and itName != "None" and itName != "":
   token = gettok()
 
   url = "/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name='" + catalogName + "'"
