@@ -54,7 +54,7 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
       print c
   elif operation == "setguid":
     if guid != "":
-      expiration = datetime.datetime.now() + datetime.timedelta(days=1)
+      expiration = datetime.datetime.now() + datetime.timedelta(hours=2)
       et = expiration.strftime("%a, %d-%b-%Y %H:%M:%S")
       c = Cookie.SimpleCookie()
       c["summitlabguid"] = guid
@@ -408,7 +408,11 @@ elif operation == "showguid":
   print "<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType
   print "<li>Consult the lab instructions <i>before</i> attempting to connect to the lab environment.</li>"
   if docURL != "" and docURL != "None":
-    docURL = docURL.replace('REPL', guid)
+    if shared and sharedGUID != "":
+      docURL = docURL.replace('REPL', sharedGUID)
+      docURL = docURL.replace('X', guid)
+    else:
+      docURL = docURL.replace('REPL', guid)
     print "<li>Open the lab instructions by clicking <a href='%s' target='_blank'>here</a></li>" % docURL
   if labSSHkey != "" and labSSHkey != "None":
     print "<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey
