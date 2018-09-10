@@ -73,9 +73,16 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
   print '<html><head>'
   print """
 <script>
+var isSafari = window.safari !== undefined;
+
+if (isSafari) {
+    alert("We are sorry but, unfortunately, Safari is not compatible with our application.");
+}
+
 if (/Edge/.test(navigator.userAgent)) {
     alert("We are sorry but, unfortunately, Microsoft browsers are not compatible with our application.");
 }
+
 </script>
 """
   if operation == "showguid":
