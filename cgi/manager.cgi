@@ -92,7 +92,7 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
 
 def printfooter(operation="none"):
   if operation is not "mainmenu":
-    print '<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\'/gg/manager.cgi\'">Home</button></center>'
+    print '<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + '\'">Home</button></center>'
   includehtml('footer2.inc')
   print '</body>'
   print '</html>'

@@ -12,6 +12,23 @@ groupWait=1 # Minutes between groups
 apiWait=3 # Seconds between API calls in a group
 
 # Dont touch from here on
+rawurlencode() {
+  local string="${1}"
+  local strlen=${#string}
+  local encoded=""
+  local pos c o
+
+  for (( pos=0 ; pos<strlen ; pos++ )); do
+     c=${string:$pos:1}
+     case "$c" in
+        [-_.~a-zA-Z0-9] ) o="${c}" ;;
+        * )               printf -v o '%%%02x' "'$c"
+     esac
+     encoded+="${o}"
+  done
+  echo "${encoded}"    # You can either set a return variable (FASTER) 
+  REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
+}
 
 usage() {
   echo "Error: Usage $0 -c <catalog name> -i <item name> [ -u <username> -P <password> -t <totalRequests> -g <groupCount> -p <groupWait> -a <apiWait> -w <uri> -d <key1=value;key2=value> -n -N]"
@@ -79,7 +96,8 @@ then
   exit 1
 fi
 
-catalogName=`echo $catalogName|sed "s/ /+/g"`
+#catalogName=`echo $catalogName|sed "s/ /+/g"`
+catalogName=$(rawurlencode $catalogName)
 catalogID=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name='$catalogName'" | python -m json.tool |grep '"id"' | cut -f2 -d:|sed "s/[ ,\"]//g"`
 if [ -z "$catalogID" ]
 then
@@ -88,7 +106,8 @@ then
 fi
 echo "catalogID is $catalogID"
 
-itemName=`echo $itemName|sed "s/ /+/g"`
+#itemName=`echo $itemName|sed "s/ /+/g"`
+itemName=$(rawurlencode $itemName)
 itemID=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/service_templates?attributes=service_template_catalog_id,id,name&expand=resources&filter%5B%5D=name='$itemName'&filter%5B%5D=service_template_catalog_id='$catalogID'" | python -m json.tool |grep '"id"' | cut -f2 -d:|sed "s/[ ,\"]//g"`
 if [ -z "$itemID" ]
 then
@@ -129,6 +148,7 @@ do
   while [ $c -le $groupCount -a $t -le $totalRequests ]
   do
     echo "Deploying request $t in group $g"
+    #echo "$uri/api/service_catalogs/$catalogID/service_templates -d \"$PAYLOAD\""
     out=`curl -s $ssl --user $username:$password -H "Content-Type: application/json" -X POST $uri/api/service_catalogs/$catalogID/service_templates -d "$PAYLOAD"`
     testerr=`echo $out|grep '{"error":'`
     if [ -n "$testerr" ]

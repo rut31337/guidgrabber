@@ -1,8 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import argparse
 import requests
-import urllib
+#import urllib
+import urllib.parse
+
 import re
 from requests.auth import HTTPBasicAuth
 
@@ -23,9 +25,11 @@ cfurl = args.cfurl
 cfuser = args.cfuser
 cfpass = args.cfpass
 catName = args.catalog
-catalogName = urllib.quote(catName)
+#catalogName = urllib.quote(catName)
+catalogName = urllib.parse.quote(catName)
 itName = args.item
-itemName = urllib.quote(itName)
+#itemName = urllib.quote(itName)
+itemName = urllib.parse.quote(itName)
 userFilter = args.ufilter
 outFile = args.out
 shared = args.shared
@@ -38,11 +42,12 @@ def gettok():
   return data['auth_token']
 
 def apicall(token, url, op, inp = None ):
-  #print "URL: " + url
+  #print("CFURL: " + cfurl)
+  #print("URL: " + url)
   head = {'Content-Type': 'application/json', 'X-Auth-Token': token, 'accept': 'application/json;version=2'}
   if op == "get":
     response = requests.get(cfurl + url, headers=head, verify=sslVerify)
-  #print "RESPONSE: " + response.text
+  #print("RESPONSE: " + response.text)
   obj = response.json()
   return obj.get('resources')
 
@@ -55,7 +60,7 @@ if itName != "N/A" and itName != "None" and itName != "":
   url = "/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name='" + catalogName + "'"
   cats = apicall(token, url, "get", inp = None )
   if not cats:
-    print "ERROR: No such catalog " + catName
+    print("ERROR: No such catalog " + catName)
     exit ()
   else:
     catalogID = str(cats[0]['id'])
@@ -63,8 +68,9 @@ if itName != "N/A" and itName != "None" and itName != "":
 
   url = "/api/service_templates?attributes=service_template_catalog_id,id,name&expand=resources&filter%5B%5D=name='" + itemName + "'&filter%5B%5D=service_template_catalog_id='" + catalogID + "'"
   items = apicall(token, url, "get", inp = None )
+  #print "DEBUG: " + str(items)
   if not items:
-    print "ERROR: No such item " + itName
+    print("ERROR: No such item " + itName)
     exit ()
   else:
     itemID = str(items[0]['id'])
@@ -74,9 +80,11 @@ if itName != "N/A" and itName != "None" and itName != "":
 
   if userFilter != "":
     url = "/api/users?expand=resources&filter%5B%5D=userid='" + userFilter + "'"
+    #print("DEBUG: " + url)
     users = apicall(token, url, "get", inp = None )
+    #print("DEBUG users: " + str(users))
     if not users:
-      print "ERROR: No such user " + userFilter
+      print("ERROR: No such user " + userFilter)
       exit ()
     else:
       userID = str(users[0]['id'])
@@ -90,7 +98,7 @@ if itName != "N/A" and itName != "None" and itName != "":
       for cab in svc['custom_attributes']:
         if cab['name'] == 'GUID':
           guid = cab['value']
-          print guid
+          print(guid)
           exit ()
 
   for svc in services:
