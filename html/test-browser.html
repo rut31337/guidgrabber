@@ -1,0 +1,47 @@
+
+<div style="position: fixed; top: 0px; left: 0px; z-index: 3000;
+            height: 100%; width: 100%; background-color: #FFFFFF">
+  <p style="margin-left: 10px">
+
+Testing your browser compatibility with GuidGrabber:<br>
+<br>
+
+<noscript>
+          JavaScript: <font color=red>NOT Enabled</font><br>
+</noscript>
+
+
+<script>
+   document.write("JavaScript: <font color=green>Enabled</font><br>");
+</script>
+
+<script>
+if (!navigator.cookieEnabled)
+{
+   document.write("Cookies: <font color=red>NOT Enabled</font><br>");
+} else {
+   document.write("Cookies: <font color=green>Enabled</font><br>");
+}
+</script>
+
+<script>
+var isChromium = window.chrome;
+var winNav = window.navigator;
+var vendorName = winNav.vendor;
+var isOpera = typeof window.opr !== "undefined";
+var isIEedge = winNav.userAgent.indexOf("Edge") > -1;
+var isFF = navigator.userAgent.indexOf("Firefox");
+
+if (isChromium !== null &&
+  typeof isChromium !== "undefined" &&
+  vendorName === "Google Inc." &&
+  isOpera === false &&
+  isIEedge === false || isFF > -1 ) {
+   document.write("Browser: <font color=green>Supported</font><br>");
+} else { 
+   document.write("Browser: <font color=red>NOT supported</font><br>");
+}
+</script>
+
+        </p>
+    </div>
