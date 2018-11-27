@@ -18,7 +18,6 @@
                           <div class="summit-footnote" data-summit-theme="dark">
                               <ul class="summit-footnote-container">
                                   <li class="summit-footnote-item"><div id="link_bar"><a href="https://mojo.redhat.com/docs/DOC-1172529" target=_blank>Documentation</a></div></li>
-                                  <li class="summit-footnote-item">Copyright ©2018 Red Hat, Inc.</li>
                               </ul>
                           </div>
                           <!-- Footnote Component -->
