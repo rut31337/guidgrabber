@@ -8,14 +8,15 @@ uri="https://cf.example.com"
 # Dont touch from here on
 
 usage() {
-  echo "Error: Usage $0 -c <catalog name> -i <item name> -u <username> [ -P <password> -w <uri> -n -N ]"
+  echo "Error: Usage $0 -c <catalog name> -i <item name> -u <username> [ -f <optional-user-to-filter-to> -P <password> -w <uri> -n -N ]"
 }
 
-while getopts Nnu:P:c:i:w: FLAG; do
+while getopts Nnu:P:c:i:w:f: FLAG; do
   case $FLAG in
     n) noni=1;;
     N) insecure=1;;
-    u) username="$OPTARG";;
+    u) userName="$OPTARG";;
+    f) userFilter="$OPTARG";;
     P) password="$OPTARG";;
     c) catalogName="$OPTARG";;
     i) itemName="$OPTARG";;
@@ -30,9 +31,9 @@ then
   exit 1
 fi
 
-if [ -z "$username" ]
+if [ -z "$userName" ]
 then
-  echo -n "Enter CF Username: ";read username
+  echo -n "Enter CF Username: ";read userName
 fi
 
 if [ -z "$password" ]
@@ -51,7 +52,7 @@ else
   ssl=""
 fi
 
-tok=`curl -s $ssl --user $username:$password -X GET -H "Accept: application/json" $uri/api/auth|python -m json.tool|grep auth_token|cut -f4 -d\"`
+tok=`curl -s $ssl --user $userName:$password -X GET -H "Accept: application/json" $uri/api/auth|python -m json.tool|grep auth_token|cut -f4 -d\"`
 
 if [ -z "$tok" ]
 then
@@ -78,8 +79,14 @@ then
 fi
 echo "itemID is $itemID"
 
+if [ -n "$userFilter" ]
+then
+  uif=$userFilter
+else
+  uif=$userName
+fi
 
-userid=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/users?expand=resources&filter%5B%5D=userid='$username'"| python -m json.tool | grep '"id"' | cut -f2 -d:|sed "s/[ ,\"]//g"`
+userid=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/users?expand=resources&filter%5B%5D=userid='$uif'"| python -m json.tool | grep '"id"' | cut -f2 -d:|sed "s/[ ,\"]//g"`
 
 svcs=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/services?attributes=href&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'" | python -m json.tool |grep '"href"'|grep "services/"|cut -f2- -d:|sed -e "s/[ ,\"]//g"`
 

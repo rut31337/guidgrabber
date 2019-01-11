@@ -255,7 +255,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     print "<tr><td align=center style='font-size: 0.6em;'><b>Delete Assigned GUIDs:&nbsp;</b><input type='checkbox' name='delete_assigned'></td></tr>"
   if operation == 'deploy_lab':
     print "<tr><td align=right style='font-size: 0.6em;'><b>Number Of Instances To Deploy:</b></td><td><input type='text' name='num_instances' size='2'></td></tr>"
-  if operation == 'deploy_lab' or operation == 'delete_instance':
+    #if operation == 'deploy_lab' or operation == 'delete_instance':
     print "<tr><td align=right style='font-size: 0.6em;'><b>Password for user %s:</b></td><td><input type='password' name='cfpass' size='8'></td></tr>" % (profile)
   print '<tr><td colspan=2 align=center>'
   printback2()
@@ -751,17 +751,22 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printfooter()
     exit()
   elif operation == "delete_instances":
-    if 'cfpass' not in form:
-      printheader()
-      prerror("ERROR: CloudForms password not provided.")
-      printback()
-      printfooter()
-      exit()
-    cfpass = form.getvalue('cfpass')
+    #if 'cfpass' not in form:
+    #  printheader()
+    #  prerror("ERROR: CloudForms password not provided.")
+    #  printback()
+    #  printfooter()
+    #  exit()
+    #cfpass = form.getvalue('cfpass')
     printheader()
     print "Attempting to delete all deployed instances of <b>%s/%s</b> in environment <b>%s</b>.<br><pre>" % (catName, catItem, environment)
     retiresvc = ggbin + "retire_svcs.sh"
-    execute([retiresvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-n"])
+    #execute([retiresvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-n"])
+    config = ConfigParser.ConfigParser()
+    config.read(cfgfile)
+    cfuser = config.get('cloudforms-credentials', 'user')
+    cfpass = config.get('cloudforms-credentials', 'password')
+    execute([retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-n"])
     print "</pre><center>Retirement Queued.<br>"
     printback2()
     print "<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=dellc&labcode=%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode)
