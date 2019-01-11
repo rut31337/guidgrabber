@@ -15,6 +15,11 @@ from random import randint
 import time
 from time import sleep
 
+# WARNING: This is very insecure to set to True.  Set this to True only if you want to 
+# enable a default activation key of 'loadtest' for load testing purposes.  
+loadTestActive = False
+#loadTestActive = True
+
 def print_reset():
   print """
 <script>
@@ -251,7 +256,7 @@ elif operation == "searchguid":
     printfooter()
     exit ()
   ipaddr = form.getvalue('ipaddr')
-  if actkey == 'loadtest':
+  if actkey == 'loadtest' and loadTestActive:
     activated = True
   else:
     activated = False
