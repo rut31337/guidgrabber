@@ -252,7 +252,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
       print('<option value="{0}">{0} - {1}</option>'.format(row['code'],row['description']))
   print "</select></td></tr>"
   if operation == 'update_guids':
-    print "<tr><td align=center style='font-size: 0.6em;'><b>Delete Assigned GUIDs:&nbsp;</b><input type='checkbox' name='delete_assigned' checked></td></tr>"
+    print "<tr><td align=center style='font-size: 0.6em;'><b>Delete Assigned GUIDs:&nbsp;</b><input type='checkbox' name='delete_assigned'></td></tr>"
   if operation == 'deploy_lab':
     print "<tr><td align=right style='font-size: 0.6em;'><b>Number Of Instances To Deploy:</b></td><td><input type='text' name='num_instances' size='2'></td></tr>"
   if operation == 'deploy_lab' or operation == 'delete_instance':
