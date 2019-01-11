@@ -78,7 +78,10 @@ then
 fi
 echo "itemID is $itemID"
 
-svcs=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/services?attributes=href&expand=resources&filter%5B%5D=service_template_id='$itemID'" | python -m json.tool |grep '"href"'|grep "services/"|cut -f2- -d:|sed -e "s/[ ,\"]//g"`
+
+userid=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/users?expand=resources&filter%5B%5D=userid='$username'"| python -m json.tool | grep '"id"' | cut -f2 -d:|sed "s/[ ,\"]//g"`
+
+svcs=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/services?attributes=href&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'" | python -m json.tool |grep '"href"'|grep "services/"|cut -f2- -d:|sed -e "s/[ ,\"]//g"`
 
 if [ "$noni" != 1 ]
 then
