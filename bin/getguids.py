@@ -19,6 +19,7 @@ parser.add_argument('--out', help='File to write CSV into', required=True)
 parser.add_argument('--insecure', help='Use Insecure SSL Cert', action="store_false")
 parser.add_argument('--guidonly', help='Return Only The GUID', action="store_true")
 parser.add_argument('--shared', help='Number Of Shared Users (ONLY NON CF DEPLOYED!)', required=False, default=0)
+parser.add_argument('--labcode', help='Lab Code (Optional)', required=False, default="")
 args = parser.parse_args()
 
 cfurl = args.cfurl
@@ -33,6 +34,7 @@ outFile = args.out
 shared = args.shared
 sslVerify = args.insecure
 guidOnly = args.guidonly
+labCode = args.labcode
 
 def gettok():
   response = requests.get(cfurl + "/api/auth", auth=HTTPBasicAuth(cfuser, cfpass), verify=sslVerify)
@@ -92,28 +94,39 @@ if itName != "N/A" and itName != "None" and itName != "":
 
   if guidOnly:
     guid = ""
+    lc = ""
     for svc in services:
       for cab in svc['custom_attributes']:
         if cab['name'] == 'GUID':
           guid = cab['value']
-          print(guid)
-          exit ()
+        if cab['name'] == 'labCode':
+          lc = cab['value']
+      if guid != "" and lc == labCode:
+        print(guid)
+        exit ()
 
   for svc in services:
     appID = ""
     guid = ""
     serviceType = ""
+    lc = ""
     for cab in svc['custom_attributes']:
       if cab['name'] == 'GUID':
         guid = cab['value']
       elif cab['name'] == 'applicationid':
         appID = cab['value']
+      elif cab['name'] == 'labCode':
+        lc = cab['value']
     if guid != "":
       for tag in svc['tags']:
         if re.match(r'^\/managed\/servicetype', tag['name']):
           serviceType = re.split('/', tag['name'])[3]
           break
-    ln=guid + "," + appID + "," + serviceType + "\n"
+    if labCode != "":
+      if labCode == lc:
+        ln=guid + "," + appID + "," + serviceType + "\n"
+    else:
+      ln=guid + "," + appID + "," + serviceType + "\n"
     f.write(ln)
 else:
   i = 1

@@ -863,7 +863,10 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       cfuser = config.get('cloudforms-credentials', 'user')
       cfpass = config.get('cloudforms-credentials', 'password')
       #print ("DEBUG: %s --cfurl %s --cfuser %s --cfpass %s --catalog %s --item %s --out %s --ufilter %s" % (getguids, envirURL, cfuser, cfpass, catName, catItem, allGuidsCSV, profile))
-      execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
+      if spp:
+        execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode])
+      else:
+        execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
       print ("</pre>" )
       if not os.path.exists(allGuidsCSV):
         prerror("ERROR: Updating GUIDs failed in environment <b>%s</b>." % (environment))
@@ -910,10 +913,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     ordersvc = ggbin + "order_svc.sh"
     if spp:
       if blueprint != "":
-        settings = "check=t;autostart=t;noemail=t;blueprint=" + blueprint
+        settings = "check=t;autostart=t;noemail=t;pwauth=t;blueprint=%s;labCode=%s" % (blueprint, labCode)
       elif workload != "":
         settings = "check=t;autostart=t;noemail=t;workload=" + workload
-      settings = settings + ";pwauth=t"
     else:
       settings = "check=t;autostart=t;noemail=t"
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings])
@@ -936,7 +938,10 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     config.read(cfgfile)
     cfuser = config.get('cloudforms-credentials', 'user')
     cfpass = config.get('cloudforms-credentials', 'password')
-    cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-n"]
+    if spp:
+      cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-l", labCode, "-n"]
+    else:
+      cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-n"]
     # DEBUG ONLY!
     #print (cmd)
     execute(cmd)

@@ -11,7 +11,7 @@ usage() {
   echo "Error: Usage $0 -c <catalog name> -i <item name> -u <username> [ -f <optional-user-to-filter-to> -P <password> -w <uri> -n -N ]"
 }
 
-while getopts Nnu:P:c:i:w:f: FLAG; do
+while getopts Nnu:P:c:i:w:f:l: FLAG; do
   case $FLAG in
     n) noni=1;;
     N) insecure=1;;
@@ -21,6 +21,7 @@ while getopts Nnu:P:c:i:w:f: FLAG; do
     c) catalogName="$OPTARG";;
     i) itemName="$OPTARG";;
     w) uri="$OPTARG";;
+    l) labCode="$OPTARG";;
     *) usage;exit;;
     esac
 done
@@ -101,11 +102,32 @@ then
 fi
 
 PAYLOAD="{ \"action\": \"retire\" }"
+if [ -n "$labCode" ]
+then
+  echo "Deleting services with lab code: $labCode"
+fi
 
 echo -n "Retiring Services"
 for svc in $svcs
 do
-  output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
+  if [ -n "$labCode" ]
+  then
+    for ca in `curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$svc?attributes=custom_attributes&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'"| jq '.custom_attributes[]'| jq -r '"\(.name),\(.value)"'`
+    do
+      k=`echo $ca|cut -f1 -d,`
+      if [ $k == "labCode" ]
+      then
+        v=`echo $ca|cut -f2 -d,`
+        if [ "$v" == $labCode ]
+        then
+          output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
+          break
+        fi
+      fi
+    done
+  else
+    output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
+  fi
   echo -n "."
   sleep 1
 done
