@@ -79,10 +79,13 @@ def printback():
   print ('<button class="w3-btn w3-white w3-border w3-padding-small" onclick="goBack()"><&nbsp;Back</button>' )
 
 def printback2():
-  print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s'\" type=button><&nbsp;Back</button>" % myurl )
+  impb = ""
+  if impersonate:
+    impb = "?impersonate=" + profile
+  print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s%s'\" type=button><&nbsp;Back</button>" % (myurl, impb) )
 
 def printback3(labCode):
-  print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button><&nbsp;Back</button>" % (myurl, labCode) )
+  print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s%s'\" type=button><&nbsp;Back</button>" % (myurl, labCode, imp) )
 
 def callredirect(redirectURL, waittime=0):
   print ('<head>' )
@@ -103,10 +106,15 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
   print ('</head>' )
   includehtml('topbar.inc')
   includehtml('textarea_mgr.inc')
+  if impersonate:
+    print ("<center>>>>><font color=red>Impersonating user %s</font><<<<</center>" % profile)
 
 def printfooter(operation="none"):
   if operation is not "mainmenu":
-    print ('<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + '\'">Home</button></center>' )
+    imph = ""
+    if impersonate:
+      imph = "?impersonate=" + profile
+    print ('<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + imph + '\'">Home</button></center>' )
   includehtml('footer2.inc')
   print ('</body>' )
   print ('</html>' )
@@ -173,7 +181,7 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print ("<center><table>")
   if operation == 'create_lab':
     print ('<tr><td colspan=2 align=center><p style="color: black; font-size: 0.6em;">There are no labs set up for your user <b>' + profile + '</b> please fill out this form to create one:</p></td></tr>' )
-  print ('<tr><td><form id="myform" method="post" action="%s?operation=%s">' % (myurl, operation) )
+  print ('<tr><td><form id="myform" method="post" action="%s?operation=%s%s">' % (myurl, operation, imp) )
   print ("<table border=0>" )
   if operation == 'update_lab':
     print ("<tr><td align=right style='font-size: 0.6em;'><b>Lab Code*:</b></td><td><input type='hidden' name='labcode' size='20' value='%s'>%s</td></tr>" % (labcode, labcode) )
@@ -248,13 +256,29 @@ ggetc = ggroot + "/etc/"
 ggbin = ggroot + "/bin/"
 cfgfile = ggetc + "gg.cfg"
 
+admin = False
+c = configparser.ConfigParser()
+c.read(cfgfile)
+admins = c.get('manager-admins', 'users').split(',')
+if profile in admins:
+  admin = True
+
+form = cgi.FieldStorage()
+
+imp = ""
+impersonate = False
+if admin:
+  if 'impersonate' in form:
+    impersonate = True
+    profile = form.getvalue('impersonate')
+    imp = "&impersonate=" + profile 
+
 profileDir = ggetc + "/" + profile
 if not os.path.isdir(profileDir):
   os.mkdir(profileDir)
 labConfigCSV = profileDir + "/labconfig.csv"
 labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared\n"
 
-form = cgi.FieldStorage()
 if 'operation' in form:
   operation = form.getvalue('operation')
 else:
@@ -266,12 +290,11 @@ if operation == "none":
     printfooter()
     exit()
   printheader()
-  print ("<center><table>" )
+  print ("<center><table border=0><tr valign=top><td><table border=0>" )
   if 'msg' in form:
     print ('<tr><td><p style="color: black; font-size: .7em;">' + form.getvalue('msg') + "</p></td></tr>" )
-  #<tr><td>&nbsp;</td></tr>"
   print ("<tr><td style='font-size: .7em;' colspan=2>Choose an operation <b>%s</b>:</td></tr>" % profile )
-  print ("<tr><td style='font-size: .7em;'><a href=%s?operation=create_new_lab_form>Add A New Lab Configuration</a></td></tr>" % myurl )
+  print ("<tr><td style='font-size: .7em;'><a href=%s?operation=create_new_lab_form%s>Add A New Lab Configuration</a></td></tr>" % (myurl, imp) )
   found = False
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labcodes = csv.DictReader(csvFile)
@@ -282,14 +305,23 @@ if operation == "none":
         found = True
         break
   if os.path.exists(labConfigCSV) and found:
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=edit_lab>View/Edit Lab Configuration</a></td></tr>" % myurl )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=deploy_lab>Deploy Lab Instances</a></td></tr>" % myurl )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=update_guids>Update Available Lab GUIDs</a></td></tr>" % myurl )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=choose_lab>Manage Lab</a></td></tr>" % myurl )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=delete_instance>Delete Lab Instances</a></td></tr>" % myurl )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=delete_lab>Delete Lab Configuration</a></td></tr>" % myurl )
-    print ("<tr><td colspan=2>&nbsp;</td></tr><tr><td style='font-size: .6em;' colspan=2>Share this link with your attendees:<br><b>%s?profile=%s</b><br>TIP: Use bit.ly or similar tool to shorten link.</td></tr>" % (ggurl, profile) )
-  print ('</table></center>' )
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=edit_lab%s>View/Edit Lab Configuration</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=deploy_lab%s>Deploy Lab Instances</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=update_guids%s>Update Available Lab GUIDs</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=choose_lab%s>Manage Lab</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=delete_instance%s>Delete Lab Instances</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=delete_lab%s>Delete Lab Configuration</a></td></tr>" % (myurl, imp) )
+  print ('</table></td>')
+  if admin:
+    print ("<td><table border=0><tr><td style='font-size: .7em;'>Admin Functions:</td></tr>")
+    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=impersonate>Impersonate User</a></td></tr>" % myurl )
+    if impersonate:
+      print ("<tr><td style='font-size: .7em;'><a href=%s>Un-Impersonate User</a></td></tr>" % myurl )
+    print ("</table></td>")
+  print ('</tr></table>')
+  if os.path.exists(labConfigCSV) and found:
+    print ("Share this link with your attendees:<br><b>%s?profile=%s</b><br>TIP: Use bit.ly or similar tool to shorten link." % (ggurl, profile) )
+  print ('</center>')
   printfooter("mainmenu")
   exit()
 elif operation == "create_new_lab_form":
@@ -324,7 +356,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     prerror("ERROR: Unknown operation.")
     printfooter()
     exit()
-  print ('<form method="post" action="%s?operation=%s">' % (myurl, op2) )
+  print ('<form method="post" action="%s?operation=%s%s">' % (myurl, op2, imp) )
   print ('<tr><td colspan=2 align=center><p style="color: black; font-size: .8em;">Please choose the lab you wish to %s:</p></td></tr>' % op )
   print ("<tr><td colspan=2 align=center style='font-size: .6em;'><select name='labcode'>" )
   with open(labConfigCSV, encoding='utf-8') as csvFile:
@@ -390,7 +422,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
     conffile.write(ln)
   ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
   msg=urllib.parse.quote(ms)
-  redirectURL="%s?msg=%s" % (myurl, msg)
+  redirectURL="%s?msg=%s%s" % (myurl, msg, imp)
   printheader(True, redirectURL, "0", "none")
   exit()
 elif operation == "checklc" or operation == "dellc" or operation == "editlc":
@@ -420,7 +452,7 @@ elif operation == "checklc" or operation == "dellc" or operation == "editlc":
     op = "del_lab"
   elif operation == "editlc":
     op = "print_lab"
-  redirectURL = "%s?operation=%s&labcode=%s" % (myurl, op, labCode)
+  redirectURL = "%s?operation=%s&labcode=%s%s" % (myurl, op, labCode, imp)
   printheader(True, redirectURL, "0")
   printfooter()
   exit()
@@ -505,7 +537,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   if operation == "release_all_guids":
     if os.path.exists(assignedCSV):
       os.remove(assignedCSV)
-    redirectURL = "%s?operation=view_lab&labcode=%s" % (myurl, labCode)
+    redirectURL = "%s?operation=view_lab&labcode=%s%s" % (myurl, labCode, imp)
     printheader(True, redirectURL, "1")
     printfooter()
     exit()
@@ -546,7 +578,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'])
         f.write(out)
     f.close()
-    redirectURL = "%s?operation=none" % (myurl)
+    redirectURL = "%s?operation=none%s" % (myurl, imp)
     printheader(True, redirectURL, "0")
     printfooter()
     exit()
@@ -595,7 +627,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
       serviceType = ""
       if 'servicetype' in allrow:
         serviceType = allrow['servicetype']
-      print ("<tr><td style='font-size: 0.6em;' align=center><a href='%s?operation=manage_guid&guid=%s&labcode=%s'>%s</b></td></tr>" % (myurl, guid, labCode, guid) )
+      print ("<tr><td style='font-size: 0.6em;' align=center><a href='%s?operation=manage_guid&guid=%s&labcode=%s%s'>%s</b></td></tr>" % (myurl, guid, labCode, imp, guid) )
       if serviceType == "ravello":
         appID = allrow['appid']
         anf = False
@@ -672,32 +704,32 @@ function pwrOnWarn() {
     if (runtime == null || runtime == "") {
       txt = "Cancelled";
     } else {
-      window.location.href = "%s?profile=%s&operation=power_on&labcode=%s&runtime=" + runtime;
+      window.location.href = "%s?profile=%s&operation=power_on&labcode=%s&runtime=" + runtime + "%s";
     }
 }
 </script>
-""" % (myurl, profile, labCode))
+""" % (myurl, profile, labCode, imp))
     print ("""
 <script>
 function pwrOffWarn() {
     var txt;
     if (confirm("DANGER: Are you sure you wish to immediately power OFF all of your instances?  If you are sure click OK below otherwise, click Cancel.")) {
-      window.location.href = "%s?profile=%s&operation=power_off&labcode=%s";
+      window.location.href = "%s?profile=%s&operation=power_off&labcode=%s" + "%s";
     }
 }
-""" % (myurl, profile, labCode))
+""" % (myurl, profile, labCode, imp))
     print ("""
 function releaseAllWarn() {
     var txt;
     if (confirm("DANGER: This will release ALL assigned GUIDs?  It could result in users getting GUIDs that were assigned previously.  After this, you should Update Available Lab GUIDs.  If you are sure click OK below otherwise, click Cancel.")) {
-      window.location.href = "%s?profile=%s&operation=release_all_guids&labcode=%s";
+      window.location.href = "%s?profile=%s&operation=release_all_guids&labcode=%s%s";
     }
 }
 </script>
-""" % (myurl, profile, labCode))
+""" % (myurl, profile, labCode, imp))
     print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick='pwrOnWarn()'>Power ON All Instances/Extend Runtime</button>" )
     print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick='pwrOffWarn()'>Power OFF All Instances</button>" )
-    print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=get_guids&labcode=%s'\" type=button>Update Available Lab GUIDs</button>" % (myurl, labCode) )
+    print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=get_guids&labcode=%s%s'\" type=button>Update Available Lab GUIDs</button>" % (myurl, labCode, imp) )
   print ("</td></tr>" )
   print ("<tr><td colspan=6 align=center>" )
   printback2()
@@ -794,7 +826,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           ln = '"%s","%s","%s"\n' % (user, guid, "shared")
           i = i + 1
           agc.write(ln)
-      print ("<br><button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode) )
+      print ("<br><button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode, imp) )
     else:
       print ("<center>Please wait, looking for GUIDs..." )
       print ("<pre>" )
@@ -814,7 +846,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         else:
           print ("Success! <b>%s</b> GUIDs defined for lab <b>%s</b><br>" % (str(num_lines), labCode) )
           printback2()
-          print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode) )
+          print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode, imp) )
       print ("</center>" )
     printfooter()
     exit()
@@ -850,7 +882,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     ordersvc = ggbin + "order_svc.sh"
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", "check=t;autostart=t;noemail=t"])
     print ("</pre><center>" )
-    print ("If deployment started successfully, wait at least 20 minutes from the output of this message (to complete deployment and GUID generation) then click <a href=%s?operation=update_guids>here</a> to update available the available GUIDs database.  Optionally you can use <b>Update Available Lab GUIDs</b> from the main menu.<br><center>" % myurl )
+    print ("If deployment started successfully, wait at least 20 minutes from the output of this message (to complete deployment and GUID generation) then click <a href=%s?operation=update_guids%s>here</a> to update available the available GUIDs database.  Optionally you can use <b>Update Available Lab GUIDs</b> from the main menu.<br><center>" % (myurl, imp) )
     printfooter()
     exit()
   elif operation == "delete_instances":
@@ -864,15 +896,17 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printheader()
     print ("Attempting to delete all deployed instances of <b>%s/%s</b> in environment <b>%s</b>.<br><pre>" % (catName, catItem, environment) )
     retiresvc = ggbin + "retire_svcs.sh"
-    #execute([retiresvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-n"])
     config = configparser.ConfigParser()
     config.read(cfgfile)
     cfuser = config.get('cloudforms-credentials', 'user')
     cfpass = config.get('cloudforms-credentials', 'password')
-    execute([retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-n"])
+    cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-n"]
+    # DEBUG ONLY!
+    #print (cmd)
+    execute(cmd)
     print ("</pre><center>Retirement Queued.<br>" )
     printback2()
-    print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=dellc&labcode=%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode) )
+    print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=dellc&labcode=%s%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode, imp) )
     print ("</center>" )
     printfooter()
     exit()
@@ -906,8 +940,8 @@ elif operation == "manage_guid":
   print ("<center><table>" )
   print ("<tr><td style='font-size: .6em;' colspan=2>Choose a operation for GUID <b>%s</b>, <b>%s</b>:</td></tr>" % (guid, profile) )
   if not locked:
-    print ("<tr><td style='font-size: .6em;'><a href=%s?operation=lock_guid&guid=%s&labcode=%s>Lock GUID Availability</a> - Remove GUID from available pool. This will release current user (if any) as well!</td></tr>" % (myurl, guid, labCode) )
-  print ("<tr><td style='font-size: .6em;'><a href=%s?operation=release_guid&guid=%s&labcode=%s>Release GUID</a> - Make GUID generally available even if already in use <font color=red>(Danger!)</font></td></tr>" % (myurl, guid, labCode) )
+    print ("<tr><td style='font-size: .6em;'><a href=%s?operation=lock_guid&guid=%s&labcode=%s%s>Lock GUID Availability</a> - Remove GUID from available pool. This will release current user (if any) as well!</td></tr>" % (myurl, guid, labCode, imp) )
+  print ("<tr><td style='font-size: .6em;'><a href=%s?operation=release_guid&guid=%s&labcode=%s%s>Release GUID</a> - Make GUID generally available even if already in use <font color=red>(Danger!)</font></td></tr>" % (myurl, guid, labCode, imp) )
   print ("<tr><td colspan=2 align=center>" )
   printback3(labCode)
   print ('</td></tr>' )
@@ -946,6 +980,13 @@ elif operation == "lock_guid" or operation == "release_guid":
   print ("</center>" )
   printfooter()
   exit()
+elif operation == "impersonate":
+  printheader()
+  print ('<form id="myform" method="post" action="%s">' % (myurl) )
+  print ("<center><table>")
+  print ("<tr><td align=right style='font-size: 0.6em;'><b>User To Impersonate:</b></td><td><input type='text' name='impersonate' size='20'></td></tr>" )
+  print ("</table></center></form>")
+
 else:
   printheader()
   prerror("ERROR: Invalid operation.")

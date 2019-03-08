@@ -25,10 +25,8 @@ cfurl = args.cfurl
 cfuser = args.cfuser
 cfpass = args.cfpass
 catName = args.catalog
-#catalogName = urllib.quote(catName)
 catalogName = urllib.parse.quote(catName)
 itName = args.item
-#itemName = urllib.quote(itName)
 itemName = urllib.parse.quote(itName)
 userFilter = args.ufilter
 outFile = args.out
@@ -60,7 +58,7 @@ if itName != "N/A" and itName != "None" and itName != "":
   url = "/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name='" + catalogName + "'"
   cats = apicall(token, url, "get", inp = None )
   if not cats:
-    print("ERROR: No such catalog " + catName)
+    print(("ERROR: No such catalog " + catName))
     exit ()
   else:
     catalogID = str(cats[0]['id'])
@@ -70,7 +68,7 @@ if itName != "N/A" and itName != "None" and itName != "":
   items = apicall(token, url, "get", inp = None )
   #print "DEBUG: " + str(items)
   if not items:
-    print("ERROR: No such item " + itName)
+    print(("ERROR: No such item " + itName))
     exit ()
   else:
     itemID = str(items[0]['id'])
@@ -84,7 +82,7 @@ if itName != "N/A" and itName != "None" and itName != "":
     users = apicall(token, url, "get", inp = None )
     #print("DEBUG users: " + str(users))
     if not users:
-      print("ERROR: No such user " + userFilter)
+      print(("ERROR: No such user " + userFilter))
       exit ()
     else:
       userID = str(users[0]['id'])
