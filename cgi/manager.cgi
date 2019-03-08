@@ -385,7 +385,10 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
     print ("<tr><td align=right style='font-size: 0.6em;'><center><b>Number Of Instances To Deploy:&nbsp;</b><input type='text' name='num_instances' size='2'></center></td></tr>" )
     #if operation == 'deploy_lab' or operation == 'delete_instance':
     if spp:
-      print ("<tr><td align=right style='font-size: 0.6em;'><td><input type='hidden' name='cfpass' value='TeST123!Go'></td></tr>")
+      config = configparser.ConfigParser()
+      config.read(cfgfile)
+      sppPass = config.get('spp', 'password')
+      print ("<tr><td align=right style='font-size: 0.6em;'><td><input type='hidden' name='cfpass' value='%s'></td></tr>" % (sppPass))
     else:
       print ("<tr><td align=right style='font-size: 0.6em;'><b>Password for user %s:</b></td><td><input type='password' name='cfpass' size='8'></td></tr>" % (profile) )
   print ('<tr><td colspan=2 align=center>' )
