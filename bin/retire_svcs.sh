@@ -8,10 +8,10 @@ uri="https://cf.example.com"
 # Dont touch from here on
 
 usage() {
-  echo "Error: Usage $0 -c <catalog name> -i <item name> -u <username> [ -f <optional-user-to-filter-to> -P <password> -w <uri> -n -N ]"
+  echo "Error: Usage $0 -c <catalog name> -i <item name> -u <username> [ -g <groupCount> -p <groupWait> -f <optional-user-to-filter-to> -P <password> -w <uri> -l <labCode> -n -N ]"
 }
 
-while getopts Nnu:P:c:i:w:f:l: FLAG; do
+while getopts Nnu:P:c:i:w:f:l:g:p: FLAG; do
   case $FLAG in
     n) noni=1;;
     N) insecure=1;;
@@ -22,6 +22,8 @@ while getopts Nnu:P:c:i:w:f:l: FLAG; do
     i) itemName="$OPTARG";;
     w) uri="$OPTARG";;
     l) labCode="$OPTARG";;
+    g) groupCount="$OPTARG";;
+    p) groupWait="$OPTARG";;
     *) usage;exit;;
     esac
 done
@@ -70,7 +72,6 @@ then
 fi
 echo "catalogID is $catalogID"
 
-
 itemName=`echo $itemName|sed "s/ /+/g"`
 itemID=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$uri/api/service_templates?attributes=service_template_catalog_id,id,name&expand=resources&filter%5B%5D=name='$itemName'&filter%5B%5D=service_template_catalog_id='$catalogID'" | python -m json.tool |grep '"id"' | cut -f2 -d:|sed "s/[ ,\"]//g"`
 if [ -z "$itemID" ]
@@ -107,9 +108,28 @@ then
   echo "Deleting services with lab code: $labCode"
 fi
 
+if [ -n "$groupWait" ]
+then
+  ((slp=$groupWait * 60))
+else
+  slp=60
+fi
+
+c=0
 echo -n "Retiring Services"
 for svc in $svcs
 do
+  if [ -n "$groupCount" ]
+  then
+    if [ $c -ge $groupCount ]
+    then
+      c=1
+      echo -n "S"
+      sleep $slp
+    else
+      (( c = $c + 1 ))
+    fi
+  fi
   if [ -n "$labCode" ]
   then
     for ca in `curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$svc?attributes=custom_attributes&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'"| jq '.custom_attributes[]'| jq -r '"\(.name),\(.value)"'`
