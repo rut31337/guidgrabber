@@ -95,13 +95,16 @@ if itName != "N/A" and itName != "None" and itName != "":
   if guidOnly:
     guid = ""
     lc = ""
+    status = ""
     for svc in services:
       for cab in svc['custom_attributes']:
         if cab['name'] == 'GUID':
           guid = cab['value']
         if cab['name'] == 'labCode':
           lc = cab['value']
-      if guid != "" and lc == labCode:
+        if cab['name'] == 'service_status':
+          status = cab['value']
+      if guid != "" and lc == labCode and status == "complete":
         print(guid)
         exit ()
 
@@ -112,6 +115,7 @@ if itName != "N/A" and itName != "None" and itName != "":
     lc = ""
     ln = ""
     sandboxZone = ""
+    status = ""
     for cab in svc['custom_attributes']:
       if cab['name'] == 'GUID':
         guid = cab['value']
@@ -119,8 +123,12 @@ if itName != "N/A" and itName != "None" and itName != "":
         appID = cab['value']
       elif cab['name'] == 'labCode':
         lc = cab['value']
+      elif cab['name'] == 'service_status':
+        status = cab['value']
       elif cab['name'] == 'sandboxzone':
         sandboxZone = cab['value']
+    if status != "complete":
+      continue
     if guid != "":
       for tag in svc['tags']:
         if re.match(r'^\/managed\/servicetype', tag['name']):

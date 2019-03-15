@@ -890,7 +890,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           agc.write(ln)
       print ("<br><button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode, imp) )
     else:
-      print ("<center>Please wait, looking for GUIDs..." )
+      print ("<center>Please wait, getting GUIDs..." )
       print ("<pre>" )
       getguids = ggbin + "getguids.py"
       config = configparser.ConfigParser()
@@ -908,7 +908,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       else:
         num_lines = sum(1 for line in open(allGuidsCSV)) - 1
         if num_lines < 1:
-          print ("We were able to find the catalog and catalog item, however it appears you do not have any services deployed in <b>%s</b> under your account <b>%s</b>.  Did you forget to deploy lab instances?" % (environment, profile) )
+          print ("We were able to find the catalog and catalog item, however it appears you do not have any services completely deployed in <b>%s</b> under your account <b>%s</b>.  If the services are still deploying you may need to try again later.  Also, make sure you didn't forget to deploy lab instances." % (environment, profile) )
         else:
           print ("Success! <b>%s</b> GUIDs defined for lab <b>%s</b><br>" % (str(num_lines), labCode) )
           printback2()
