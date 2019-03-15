@@ -120,7 +120,7 @@ def printfooter(operation="none"):
   print ('</html>' )
   exit()
 
-def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", workload=""):
+def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", workload="", region=""):
   config = configparser.ConfigParser()
   config.read(cfgfile)
   cfuser = config.get('cloudforms-credentials', 'user')
@@ -192,9 +192,25 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   else:
     print ("<tr><td align=right style='font-size: 0.6em;'><b>Lab Name*:</b></td><td><input type='text' name='labname' size='80' value='%s'></td></tr>" %  labname )
   print ("<tr><td align=right style='font-size: 0.6em;'><b>Lab Key*:</b></td><td><input type='text' name='labkey' size='20' value='%s'></td></tr>" % labkey )
+  print ("<tr><td align=right style='font-size: 0.6em;'><b>Region*:</b></td><td><select name='region'>")
+  na = ""
+  apac = ""
+  emea = ""
+  if region == "na":
+    na = "selected"
+  elif region == "apac":
+    apac = "selected"
+  elif region == "emea":
+    emea = "selected"
+  print ("<option value='na' %s>NA</option>" % na )
+  print ("<option value='emea' %s>EMEA</option>" % emea)
+  print ("<option value='apac' %s>APAC</option>" % apac)
+  print ("</select></td></tr>")
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><b>NOTE:</b> For all fields specifying FQDN or URL you can use the string <b>REPL</b> which will be replaced by GUID (ex. bastion-REPL.rhpds.opentlc.com)</td></tr>" )
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>" )
   if spp:
+    print ("<tr><td align=right style='font-size: 0.6em;'><b>Catalog Name:</b></td><td><input type='text' name='catname' size='80' value='%s'></td></tr>" % catname)
+    print ("<tr><td align=right style='font-size: 0.6em;'><b>Catalog Item:</b></td><td><input type='text' name='catitem' size='80' value='%s'></td></tr>" % catitem)
     print ("<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below for either Blueprint or Workload (depending on your cloud)</td></tr>" )
     print ("<tr><td align=right style='font-size: 0.6em;'><b>Blueprint (Ravello Only)*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
     print ("<tr><td align=right style='font-size: 0.6em;'><b>Workload (AgnosticD Only)*:</b></td><td><input type='text' name='workload' size='80' value='%s'></td></tr>" %  workload )
@@ -228,10 +244,7 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print ("<tr><td align=right style='font-size: 0.6em;'><b>Semicolon Delimited List of Lab URLs (ex. https://www-REPL.rhpds.opentlc.com):</b></td><td><textarea cols='80' name='laburls'>%s</textarea></td></tr>" % laburls )
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>" )
   print ("<tr><td align=right style='font-size: 0.6em;'><b>Lab Documentation URL:</b></td><td><input type='text' name='docurl' size='80' value='%s'></td></tr>" % docurl )
-  if spp:
-    print ("<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='catname' size='80' value='Deployers'></td></tr>")
-    print ("<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='catitem' size='80' value='Ravello Lab Deployer'></td></tr>")
-  else:
+  if not spp:
     print ("<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='blueprint' size='80' value='%s'></td></tr>" % blueprint )
     print ("<tr><td align=right style='font-size: 0.6em;'></td><td><input type='hidden' name='workload' size='80' value='%s'></td></tr>" % workload )
   print ('<tr><td colspan=2 align=center>' )
@@ -239,13 +252,14 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print ('<input class="w3-btn w3-white w3-border w3-padding-small" type="submit" value="Next&nbsp;>"></td></tr></table>' )
   print ("</form></td></tr>" )
   print ('</table></center>' )
-  print ("<script>")
-  print ("window.onload = setItems(document.getElementById('catname'), document.getElementById('catitems'), '%s');" % catitem)
-  print ("</script>")
-  if catname != "":
+  if not spp:
     print ("<script>")
-    print ("window.onload = createOption(document.getElementById('catitems'), '%s', '%s', true);" % (catitem, catitem))
+    print ("window.onload = setItems(document.getElementById('catname'), document.getElementById('catitems'), '%s');" % catitem)
     print ("</script>")
+    if catname != "":
+      print ("<script>")
+      print ("window.onload = createOption(document.getElementById('catitems'), '%s', '%s', true);" % (catitem, catitem))
+      print ("</script>")
 if not os.environ.get('REMOTE_USER'): 
   printheader()
   prerror("ERROR: No profile specified.")
@@ -254,7 +268,7 @@ if not os.environ.get('REMOTE_USER'):
 else:
   profile = os.environ.get('REMOTE_USER')
 
-if profile == "generic_tester":
+if profile == "generic_tester" or profile == "generic_sko" or profile == "generic_summit":
   spp = True
   myurl = "/gg/manager-spp.cgi"
 else:
@@ -288,7 +302,7 @@ profileDir = ggetc + "/" + profile
 if not os.path.isdir(profileDir):
   os.mkdir(profileDir)
 labConfigCSV = profileDir + "/labconfig.csv"
-labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared,workload\n"
+labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared,workload,region\n"
 
 if 'operation' in form:
   operation = form.getvalue('operation')
@@ -437,7 +451,8 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   shared = form.getvalue('shared')
   blueprint = form.getvalue('blueprint')
   workload = form.getvalue('workload')
-  ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload)
+  region = form.getvalue('region')
+  ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload, region)
   with open(labConfigCSV, "a", encoding='utf-8') as conffile:
     conffile.write(ln)
   ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
@@ -491,7 +506,23 @@ elif operation == "print_lab":
         if 'shared' not in row:
           row['shared'] = ""
         printheader()
-        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'])
+        if 'blueprint' not in row:
+          blueprint = ""
+        else:
+          blueprint = row['blueprint']
+        if 'shared' not in row:
+          shared = ""
+        else:
+          shared = row['shared']
+        if 'workload' not in row:
+          workload = ""
+        else:
+          workload = row['workload']
+        if 'region' not in row:
+          region = ""
+        else:
+          region = row['region']
+        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], blueprint, shared, workload, region)
         printfooter()
         exit()
   printheader()
@@ -572,7 +603,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     if operation == "del_lab":
       for row in labcodes:
         if row['code'] != labCode:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'], row['region'])
           f.write(out)
       if os.path.exists(allGuidsCSV):
         os.remove(allGuidsCSV)
@@ -594,9 +625,10 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           blueprint = form.getvalue('blueprint')
           shared = form.getvalue('shared')
           workload = form.getvalue('workload')
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload)
+          region = form.getvalue('region')
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload, region)
         else:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'], row['region'])
         f.write(out)
     f.close()
     redirectURL = "%s?operation=none%s" % (myurl, imp)
@@ -774,6 +806,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
   shared = ""
   blueprint = ""
   workload = ""
+  region = ""
   #labuser = "lab-user"
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labcodes = csv.DictReader(csvFile)
@@ -788,6 +821,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           blueprint = row['blueprint']
         if 'workload' in row and row['workload'] != "None":
           workload = row['workload']
+        if 'region' in row and row['region'] != "None":
+          region = row['region']
         if 'shared' in row and row['shared'] != "None":
           shared = row['shared']
         break
@@ -863,7 +898,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       cfuser = config.get('cloudforms-credentials', 'user')
       cfpass = config.get('cloudforms-credentials', 'password')
       #print ("DEBUG: %s --cfurl %s --cfuser %s --cfpass %s --catalog %s --item %s --out %s --ufilter %s" % (getguids, envirURL, cfuser, cfpass, catName, catItem, allGuidsCSV, profile))
-      if spp:
+      if spp and blueprint != "":
         execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode])
       else:
         execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
@@ -913,11 +948,11 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     ordersvc = ggbin + "order_svc.sh"
     if spp:
       if blueprint != "":
-        settings = "check=t;autostart=t;noemail=t;pwauth=t;blueprint=%s;labCode=%s" % (blueprint, labCode)
+        settings = "check=t;autostart=t;noemail=t;pwauth=t;blueprint=%s;labCode=%s;region=%s" % (blueprint, labCode, region)
       elif workload != "":
-        settings = "check=t;autostart=t;noemail=t;workload=" + workload
+        settings = "expiration=7;runtime=168;region=%s;nodes=3;workload=%s;labCode=%s" % (region, workload, labCode)
     else:
-      settings = "check=t;autostart=t;noemail=t"
+      settings = "check=t;autostart=t;noemail=t;region=" + region
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings])
     print ("</pre><center>" )
     print ("If deployment started successfully, wait at least 20 minutes from the output of this message (to complete deployment and GUID generation) then click <a href=%s?operation=update_guids%s>here</a> to update available the available GUIDs database.  Optionally you can use <b>Update Available Lab GUIDs</b> from the main menu.<br><center>" % (myurl, imp) )

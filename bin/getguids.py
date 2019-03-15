@@ -52,7 +52,7 @@ def apicall(token, url, op, inp = None ):
   return obj.get('resources')
 
 f = open(outFile, 'w')
-f.write("guid,appid,servicetype\n")
+f.write("guid,appid,servicetype,sandboxzone\n")
 
 if itName != "N/A" and itName != "None" and itName != "":
   token = gettok()
@@ -110,6 +110,8 @@ if itName != "N/A" and itName != "None" and itName != "":
     guid = ""
     serviceType = ""
     lc = ""
+    ln = ""
+    sandboxZone = ""
     for cab in svc['custom_attributes']:
       if cab['name'] == 'GUID':
         guid = cab['value']
@@ -117,6 +119,8 @@ if itName != "N/A" and itName != "None" and itName != "":
         appID = cab['value']
       elif cab['name'] == 'labCode':
         lc = cab['value']
+      elif cab['name'] == 'sandboxzone':
+        sandboxZone = cab['value']
     if guid != "":
       for tag in svc['tags']:
         if re.match(r'^\/managed\/servicetype', tag['name']):
@@ -124,10 +128,14 @@ if itName != "N/A" and itName != "None" and itName != "":
           break
     if labCode != "":
       if labCode == lc:
-        ln=guid + "," + appID + "," + serviceType + "\n"
+        ln=guid + "," + appID + "," + serviceType
     else:
-      ln=guid + "," + appID + "," + serviceType + "\n"
-    f.write(ln)
+      ln=guid + "," + appID + "," + serviceType
+    if ln != "":
+      if sandboxZone != "":
+        ln = ln + "," + sandboxZone
+      ln = ln + "\n"
+      f.write(ln)
 else:
   i = 1
   shr = int(shared)

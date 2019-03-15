@@ -45,7 +45,7 @@ def includehtml(fname):
   with open(fname, 'r', encoding='utf-8') as fin:
     print((fin.read()))
 
-def printheader(redirect=False, redirectURL="", waittime="0", operation="requestguid", guid="", labCode="", appID=""):
+def printheader(redirect=False, redirectURL="", waittime="0", operation="requestguid", guid="", labCode="", appID="", sandboxZone=""):
   if operation == "reset":
       expiration = datetime.datetime.now()
       et = expiration.strftime("%a, %d-%b-%Y %H:%M:%S")
@@ -56,6 +56,8 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
       c["summitlabcode"]["expires"] = et
       c["summitappid"] = ""
       c["summitappid"]["expires"] = et
+      c["sandboxzone"] = ""
+      c["sandboxzone"]["expires"] = et
       print(c)
   elif operation == "setguid":
     if guid != "":
@@ -70,6 +72,9 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="request
       if appID != "":
         c["summitappid"] = appID
         c["summitappid"]["expires"] = et
+      if sandboxZone != "":
+        c["sandboxzone"] = sandboxZone
+        c["sandboxzone"]["expires"] = et
       print(c)
   print("Content-type:text/html\r\n\r\n")
   if redirect and redirectURL != "":
@@ -179,8 +184,12 @@ if operation == "requestguid":
       cappID = c['summitappid'].value
     except:
       cappID = ""
+    try:
+      csandboxZone = c['sandboxzone'].value
+    except:
+      csandboxZone = ""
     if cguid != "" and clabCode != "":
-      redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,cguid,clabCode,cappID)
+      redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,cguid,clabCode,cappID,csandboxZone)
       printheader(True, redirectURL, "0", operation)
       exit()
   foundlabs = False
@@ -273,6 +282,7 @@ elif operation == "searchguid":
     exit()
   foundGuid = ""
   appID = ""
+  sandboxZone = ""
   with open(assignedCSV, encoding='utf-8') as ipfile:
     iplocks = csv.DictReader(ipfile)
     for row in iplocks:
@@ -285,9 +295,10 @@ elif operation == "searchguid":
       for allrow in allf:
         if allrow['guid'] == foundGuid:
           appID = allrow['appid']
+          sandboxZone = allrow['sandboxzone']
           break
   if foundGuid != "":
-    redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
+    redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
     printheader(True, redirectURL, "0", operation)
     exit()
   assignedGuid = False
@@ -326,6 +337,7 @@ elif operation == "searchguid":
       for allrow in allf:
         if allrow['guid'] == foundGuid:
           appID = allrow['appid']
+          sandboxZone = allrow['sandboxzone']
           break
   fcntl.flock(ipfile, fcntl.LOCK_UN)
   if not assignedGuid:
@@ -334,7 +346,7 @@ elif operation == "searchguid":
     printheader(True, redirectURL, "0", operation)
     exit()
   else:
-    redirectURL="%s?profile=%s&operation=setguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
+    redirectURL="%s?profile=%s&operation=setguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
     printheader(True, redirectURL, "0")
     exit()
 elif operation == "setguid":
@@ -362,8 +374,12 @@ elif operation == "setguid":
     appID = form.getvalue('appid')
   else:
     appID = ""
-  redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s" % (myurl,profile,foundGuid,labCode,appID)
-  printheader(True, redirectURL, "0", operation, foundGuid, labCode, appID)
+  if 'sandboxzone' in form:
+    sandboxZone = form.getvalue('sandboxzone')
+  else:
+    sandboxZone = ""
+  redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
+  printheader(True, redirectURL, "0", operation, foundGuid, labCode, appID, sandboxZone)
   exit()
 elif operation == "showguid":
   if 'labcode' not in form:
@@ -375,6 +391,10 @@ elif operation == "showguid":
   printheader(False, "", "", operation)
   guid = form.getvalue('guid')
   labCode = form.getvalue('labcode')
+  if 'sandboxzone' in form:
+    sandboxZone = form.getvalue('sandboxzone')
+  else:
+    sandboxZone = ""
   bastion = ""
   docURL = ""
   description = ""
@@ -439,6 +459,8 @@ elif operation == "showguid":
       bastion = bastion.replace('X', guid)
     else:
       bastion = bastion.replace('REPL', guid)
+    if sandboxZone != "":
+      bastion = bastion.replace('DOMAIN', sandboxZone)
     if labUser != "" and labUser != "None":
       print(("<li>You will need to use the user name <b>%s</b> to log into your lab environment.</li>" % labUser))
       lu = "%s@" % labUser
@@ -459,14 +481,19 @@ elif operation == "showguid":
   if urls != "" and urls != "None":
     print("<li>The following URLs will be used in your lab environment. Please only access these links when the lab instructions specify to do so:<ul>")
     for u in urls.split(";"):
+      if sandboxZone != "":
+        u = u.replace('DOMAIN', sandboxZone)
       if shared and sharedGUID != "":
         u = u.replace('REPL', sharedGUID)
       else:
         u = u.replace('REPL', guid)
       if u.startswith("*"):
         print(("<li>Wildcard DNS entry: <b>{0}</b></li>".format(u)))
-      else:
+      elif u.startswith("http"):
         print(("<li><a href='{0}' target='_blank'>{0}</a></li>".format(u)))
+      else:
+        t, u2 = u.split(':', 1)
+        print("<li><b>%s:</b>&nbsp;<a href='%s' target='_blank'>%s</a></li>" % (t, u2, u2))
     print("<li>Note: The lab instructions may specify other host names and/or URLs.</li>")
     print("</ul>")
   if bastion == "None" and urls == "None":
