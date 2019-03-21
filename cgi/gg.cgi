@@ -215,10 +215,10 @@ if operation == "requestguid":
         foundlabs = True
         fl[row['code']] = row['description']
   printheader()
-  if profile == "rhteuat":
+  if profile == "generic_tester":
     print("<tr><td><center><p style='color: purple;'>*** THIS IS THE UAT ENVIRONMENT - FOR TESTING ONLY ***</p></center></td></tr>")
   if not foundlabs:
-    print("<tr><td><center><b>Sorry, the lab sessions are not yet available.</b></center></td></tr>")
+    print("<tr><td><center><b>The lab environments are not yet available.</b></center></td></tr>")
   else:
     print("<center><table>")
     if 'msg' in form:
@@ -231,7 +231,7 @@ if operation == "requestguid":
     print("</select></td></tr>")
     print("<tr><td><b>Activation Key:</b></td><td><input type='text' name='actkey'></td></tr>")
     print('<tr><td colspan=2 align=center><input type="submit" value="Next&nbsp;>"></td></tr></table>')
-    if profile == "rhteuat":
+    if profile == "generic_tester":
       print("<tr><td><center><p style='color: purple;'>*** THIS IS THE UAT ENVIRONMENT - FOR TESTING ONLY ***</p></center></td></tr>")
     print('<input type="hidden" id="ipaddr" name="ipaddr" />')
     print(('<input type="hidden" id="profile" name="profile" value="%s" />' % profile))
