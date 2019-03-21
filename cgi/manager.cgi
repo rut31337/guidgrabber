@@ -104,7 +104,12 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
   print ('<html><head>' )
   includehtml('head_mgr.inc')
   print ('</head>' )
-  includehtml('topbar.inc')
+  if "summit" in profile or profile == "generic_tester":
+    includehtml('topbar-summit.inc')
+  elif profile == "generic_sko":
+    includehtml('topbar-sko.inc')
+  else:
+    includehtml('topbar.inc')
   includehtml('textarea_mgr.inc')
   if impersonate:
     print ("<center>>>>><font color=red>Impersonating user %s</font><<<<</center>" % profile)
@@ -675,21 +680,21 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
       if rowc == 0:
         print ("<tr>" )
       print ("<td>" )
-      print ("<table border=0>" )
+      print ("<table border=0 width=100%>" )
       guid = allrow['guid']
       serviceType = ""
       if 'servicetype' in allrow:
         serviceType = allrow['servicetype']
-      print ("<tr><td style='font-size: 0.6em;' align=center><a href='%s?operation=manage_guid&guid=%s&labcode=%s%s'>%s</b></td></tr>" % (myurl, guid, labCode, imp, guid) )
+      print ("<tr><td class=ggm><a href='%s?operation=manage_guid&guid=%s&labcode=%s%s'>%s</b></td></tr>" % (myurl, guid, labCode, imp, guid) )
       if serviceType == "ravello":
         appID = allrow['appid']
-        anf = False
         try:
           app = client.get_application(appID)
+          foundApp = True
         except:
-          prerror('Strange appid %s not found.' % (str(appID)))
-          anf = True
-        if not anf:
+          prerror('APP ID %s not found in cloud.' % (str(appID)))
+          foundApp = False
+        if foundApp and app:
           status = application_state(app)
           if app['published']:
             deployment = app['deployment']
@@ -721,11 +726,11 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
               #print ('<tr><td><a href="vnc://%s">Remote Desktop</a></td></tr>' % ipaddr )
               break
       if assigned and not locked:
-        print ("<tr><td align=center style='font-size: 0.6em; color: green;'>Assigned</td></tr>" )
+        print ("<tr><td class=ggm-g>Assigned</td></tr>" )
       elif locked:
-        print ("<tr><td align=center style='font-size: 0.6em; color: red;'>Locked</td></tr>" )
+        print ("<tr><td class=ggm-r>Locked</td></tr>" )
       else:
-        print ("<tr><td align=center style='font-size: 0.6em; color: red;'>Not Assigned</td></tr>" )
+        print ("<tr><td class=ggm-b>Unassigned</td></tr>" )
       if status != "":
         if status == "STARTED":
           color = "green"
@@ -748,6 +753,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
   print ("<th style='font-size: 0.6em;'>Assigned Labs:</th><td style='font-size: 0.6em;'>%s</td>" % asg )
   avl = tot - asg
   print ("<th style='font-size: 0.6em;'>Available Labs:</th><td style='font-size: 0.6em;'>%s</td></tr>" % avl )
+  print ("<tr><th colspan=6 style='font-size: 0.6em;'>Click a GUID to manage it.</td></tr>")
   print ("<tr><td colspan=6 align=center>" )
   if ravello:
     print ("""

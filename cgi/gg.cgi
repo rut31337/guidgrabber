@@ -104,12 +104,22 @@ if (/Edge/.test(navigator.userAgent)) {
     includehtml('head.inc')
   print('</head>')
   if operation == "showguid":
-    includehtml('topbar2.inc')
+    if "summit" in profile or profile == "generic_tester":
+      includehtml('topbar2-summit.inc')
+    elif profile == "generic_sko":
+      includehtml('topbar2-sko.inc')
+    else:
+      includehtml('topbar2.inc')
     includehtml('textarea2.inc')
   elif operation == "searchguid":
     includehtml('topbar3.inc')
   else:
-    includehtml('topbar.inc')
+    if "summit" in profile or profile == "generic_tester":
+      includehtml('topbar-summit.inc')
+    elif profile == "generic_sko":
+      includehtml('topbar-sko.inc')
+    else:
+      includehtml('topbar.inc')
     includehtml('textarea.inc')
 
 def printfooter(operation="requestguid"):
@@ -143,8 +153,9 @@ form = cgi.FieldStorage()
 if 'profile' in form:
   profile = form.getvalue('profile')
 else:
+  profile = ""
   printheader()
-  print("ERROR: No profile specified.")
+  print("ERROR: No profile specified.  Please check for typing errors or get the correct URL from a lab assistant.")
   printfooter()
   exit()
 
@@ -158,7 +169,7 @@ labConfigCSV = profileDir + "/labconfig.csv"
 
 if not os.path.isfile(labConfigCSV):
   printheader()
-  print("Sorry, labs for this session are not yet available.  Please try again later.")
+  print("Lab environments for this session are not yet available.")
   printfooter()
   exit()
 
@@ -295,7 +306,8 @@ elif operation == "searchguid":
       for allrow in allf:
         if allrow['guid'] == foundGuid:
           appID = allrow['appid']
-          sandboxZone = allrow['sandboxzone']
+          if 'sandboxzone' in allrow:
+            sandboxZone = allrow['sandboxzone']
           break
   if foundGuid != "":
     redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
@@ -337,7 +349,8 @@ elif operation == "searchguid":
       for allrow in allf:
         if allrow['guid'] == foundGuid:
           appID = allrow['appid']
-          sandboxZone = allrow['sandboxzone']
+          if 'sandboxzone' in allrow:
+            sandboxZone = allrow['sandboxzone']
           break
   fcntl.flock(ipfile, fcntl.LOCK_UN)
   if not assignedGuid:
@@ -405,6 +418,7 @@ elif operation == "showguid":
   guidType = "GUID"
   sharedGUID = ""
   shared = False
+  environment = ""
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -416,6 +430,7 @@ elif operation == "showguid":
         urls = row['urls']
         labUser = row['labuser']
         labSSHkey = row['labsshkey']
+        environment = row['environment']
         if 'shared' in row and row['shared'] != "None" and row['shared'] != "":
           guidType = "number"
           shared = True
@@ -435,10 +450,10 @@ elif operation == "showguid":
     exit()
   print("<center><table border=0>")
   print("<tr><td>")
-  print(("<center><h2>Welcome to: %s</h2><table border=1>" % description))
-  print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (guidType,guid)))
+  print(("<center><h2>Welcome to: %s</h2><table border=0>" % description))
+  print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (guidType,guid)))
   if shared and sharedGUID != "":
-    print(("<tr><td align=right>Your shared lab GUID is</td><td align=center><font size='5'><pre><b>%s</b></pre></font></td></tr>" % (sharedGUID)))
+    print(("<tr><td align=right>Your shared lab GUID is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
   print("</table></center>" )
   print("Let's get started! Please read these instructions carefully before starting to have the best lab experience:")
   print(("<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType))
@@ -503,8 +518,10 @@ elif operation == "showguid":
     #print("<li>You can access your detailed lab environment information at <a href='https://www.opentlc.com/summit-status/status.php?appid=%s&guid=%s' target='_blank'>here</a></li>" % (appid,guid))
     consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
     print(("<li>If <b>required</b> by the lab instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL))
-  #print("<li>Please click the below <b>RESET STATION</b> button when you are <i>completely finished</i> with your lab.</li>")
   print("</ul></td></tr></table>")
+  if environment == "spp":
+    print("<table border=0><tr><td align=right><font size=3>OpenShift administrator user:&nbsp;</font></td><td><font size=3><pre>admin</pre></font></td></tr>")
+    print("<tr><td align=right><font size=3>OpenShift administrator password:&nbsp;</font></td><td><font size=3><pre>r3dh4t1!</pre></font></td></tr></table>")
   print("<p>When you are <b>completely finished</b> with this lab please click the <b>RESET STATION</b> button below.</p>")
   print("<button onclick='rusure()'>RESET STATION</button>")
   print("</center>")

@@ -17,7 +17,7 @@
                           <!-- Footnote Component -->
                           <div class="summit-footnote" data-summit-theme="dark">
                               <ul class="summit-footnote-container">
-                                  <li class="summit-footnote-item">Copyright ©2018 Red Hat, Inc.</li>
+                                  <!-- <li class="summit-footnote-item">Copyright ©2019 Red Hat, Inc.</li> -->
                               </ul>
                           </div>
                           <!-- Footnote Component -->

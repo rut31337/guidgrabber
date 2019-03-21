@@ -10977,3 +10977,24 @@ img.mfp-img {
   color: #1a1a1a;
 }
 
+
+table {
+  border-collapse: collapse;
+}
+
+td.ggm, td.ggm-g, td.ggm-r, td.ggm-b {
+  text-align: center;
+  font-size: 0.6em;
+}
+
+td.ggm-g {
+  color: green;
+}
+
+td.ggm-r {
+  color: red;
+}
+
+td.ggm-b {
+  color: grey;
+}
