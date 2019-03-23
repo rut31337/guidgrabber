@@ -598,7 +598,7 @@ elif operation == "showguid":
     #print("<li>You can access your detailed lab environment information at <a href='https://www.opentlc.com/summit-status/status.php?appid=%s&guid=%s' target='_blank'>here</a></li>" % (appid,guid))
     consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
     print(("<li>If <b>required</b> by the lab instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL))
-  if surveyLink != "":
+  if surveyLink != "" and surveyLink != "None":
     print(("<li>Click <a href='%s' target='_blank'>here</a> to fill out a survey about this lab after you are done.</li>" % surveyLink))
   print("</ul></td></tr></table>")
   if environment == "spp" and profile == "generic_sko":
