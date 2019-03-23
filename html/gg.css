@@ -10998,3 +10998,13 @@ td.ggm-r {
 td.ggm-b {
   color: grey;
 }
+
+input[type=text], select {
+  width: 100%;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9em;
+}
+
+body {
+  font-family: "Overpass", Overpass, Helvetica, helvetica, arial, sans-serif;
+}

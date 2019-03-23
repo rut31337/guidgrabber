@@ -269,7 +269,7 @@ elif operation == "searchguid":
   assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
   if not os.path.exists(assignedCSV):
     with open(assignedCSV, "a", encoding='utf-8') as ipfile:
-      ipfile.write("guid,ipaddr\n")
+      ipfile.write("guid,ipaddr,email\n")
   if 'ipaddr' not in form:
     print("ERROR, no ipaddr provided.")
     printback()
@@ -506,9 +506,11 @@ elif operation == "showguid":
         print(("<li>Wildcard DNS entry: <b>{0}</b></li>".format(u)))
       elif u.startswith("http"):
         print(("<li><a href='{0}' target='_blank'>{0}</a></li>".format(u)))
-      else:
+      elif ':' in u:
         t, u2 = u.split(':', 1)
         print("<li><b>%s:</b>&nbsp;<a href='%s' target='_blank'>%s</a></li>" % (t, u2, u2))
+      else:
+        print("<li><a href='http://%s' target='_blank'>http://%s</a></li>" % (u, u))
     print("<li>Note: The lab instructions may specify other host names and/or URLs.</li>")
     print("</ul>")
   if bastion == "None" and urls == "None":
@@ -519,7 +521,7 @@ elif operation == "showguid":
     consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
     print(("<li>If <b>required</b> by the lab instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL))
   print("</ul></td></tr></table>")
-  if environment == "spp":
+  if environment == "spp" and profile == "generic_sko":
     print("<table border=0><tr><td align=right><font size=3>OpenShift administrator user:&nbsp;</font></td><td><font size=3><pre>admin</pre></font></td></tr>")
     print("<tr><td align=right><font size=3>OpenShift administrator password:&nbsp;</font></td><td><font size=3><pre>r3dh4t1!</pre></font></td></tr></table>")
   print("<p>When you are <b>completely finished</b> with this lab please click the <b>RESET STATION</b> button below.</p>")

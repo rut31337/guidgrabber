@@ -125,7 +125,7 @@ def printfooter(operation="none"):
   print ('</html>' )
   exit()
 
-def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", workload="", region=""):
+def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", workload="", region="", city="", salesforce=""):
   config = configparser.ConfigParser()
   config.read(cfgfile)
   cfuser = config.get('cloudforms-credentials', 'user')
@@ -236,8 +236,11 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   else:
     print ("<input type='radio' name='environment' value='rhpds' checked >RHPDS" )
   print ("</td></tr>" )
-  if spp:
-    print ("<tr><td align=right style='font-size: 0.6em;'><b>Shared User Count (AgnosticD Shared Only):</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared  )
+  print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>" )
+  print ("<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if not an AgnosticD shared environment.</td></tr>" )
+  print ("<tr><td align=right style='font-size: 0.6em;'><b>Shared User Count (AgnosticD shared environment only):</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared  )
+  print ("<tr><td align=right style='font-size: 0.6em;'><b>Event City (lowercase/no spaces):</b></td><td><input type='text' name='city' size='80' value='%s'></td></tr>" % city )
+  print ("<tr><td align=right style='font-size: 0.6em;'><b>Salesforce Opportunity ID (If you have one):</b></td><td><input type='text' name='salesforce' size='80' value='%s'></td></tr>" % salesforce )
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>" )
   print ("<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH in your GUID page</td></tr>" )
   print ("<tr><td align=right style='font-size: 0.6em;'><b>Bastion FQDN:</b></td><td><input type='text' name='bastion' size='40' value='%s'></td></tr>" % bastion )
@@ -246,7 +249,7 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print ("<tr><td align=right style='font-size: 0.6em;'><b>Lab User Login:</b></td><td><input type='text' name='labuser' size='80' value='%s'></td></tr>" % labuser )
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>" )
   print ("<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about URLs in your GUID page</td></tr>" )
-  print ("<tr><td align=right style='font-size: 0.6em;'><b>Semicolon Delimited List of Lab URLs (ex. https://www-REPL.rhpds.opentlc.com):</b></td><td><textarea cols='80' name='laburls'>%s</textarea></td></tr>" % laburls )
+  print ("<tr><td align=right style='font-size: 0.6em;'><b>Semicolon Delimited List of Lab URLs (ex. https://www-REPL.rhpds.opentlc.com) if http/https not provided, http assumed:</b></td><td><textarea cols='80' name='laburls'>%s</textarea></td></tr>" % laburls )
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><hr></td></tr>" )
   print ("<tr><td align=right style='font-size: 0.6em;'><b>Lab Documentation URL:</b></td><td><input type='text' name='docurl' size='80' value='%s'></td></tr>" % docurl )
   if not spp:
@@ -307,7 +310,7 @@ profileDir = ggetc + "/" + profile
 if not os.path.isdir(profileDir):
   os.mkdir(profileDir)
 labConfigCSV = profileDir + "/labconfig.csv"
-labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared,workload,region\n"
+labCSVheader = "code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared,workload,region,city,salesforce\n"
 
 if 'operation' in form:
   operation = form.getvalue('operation')
@@ -457,7 +460,11 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   blueprint = form.getvalue('blueprint')
   workload = form.getvalue('workload')
   region = form.getvalue('region')
-  ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload, region)
+  city = form.getvalue('city')
+  city = city.replace(" ", "")
+  city = city.lower()
+  salesforce = form.getvalue('salesforce')
+  ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload, region, city, salesforce)
   with open(labConfigCSV, "a", encoding='utf-8') as conffile:
     conffile.write(ln)
   ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
@@ -527,7 +534,15 @@ elif operation == "print_lab":
           region = ""
         else:
           region = row['region']
-        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], blueprint, shared, workload, region)
+        if 'city' not in row:
+          city = "unknown"
+        else:
+          city = row['city']
+        if 'salesforce' not in row:
+          salesforce = "unknown"
+        else:
+          salesforce = row['salesforce']
+        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], blueprint, shared, workload, region, city, salesforce)
         printfooter()
         exit()
   printheader()
@@ -608,7 +623,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
     if operation == "del_lab":
       for row in labcodes:
         if row['code'] != labCode:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'], row['region'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'], row['region'], row['city'], row['salesforce'])
           f.write(out)
       if os.path.exists(allGuidsCSV):
         os.remove(allGuidsCSV)
@@ -631,9 +646,13 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           shared = form.getvalue('shared')
           workload = form.getvalue('workload')
           region = form.getvalue('region')
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload, region)
+          city = form.getvalue('city')
+          city = city.replace(" ", "")
+          city = city.lower()
+          salesforce = form.getvalue('salesforce')
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, workload, region, city, salesforce)
         else:
-          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'], row['region'])
+          out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['workload'], row['region'], row['city'], row['salesforce'])
         f.write(out)
     f.close()
     redirectURL = "%s?operation=none%s" % (myurl, imp)
@@ -813,6 +832,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
   blueprint = ""
   workload = ""
   region = ""
+  city = "unknown"
+  salesforce = "unknown"
   #labuser = "lab-user"
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labcodes = csv.DictReader(csvFile)
@@ -831,6 +852,10 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           region = row['region']
         if 'shared' in row and row['shared'] != "None":
           shared = row['shared']
+        if 'city' in row and row['city'] != "None":
+          city = row['city']
+        if 'salesforce' in row and row['salesforce'] != "None":
+          salesforce = row['salesforce']
         break
   if catName == "" or catItem == "":
     printheader()
@@ -877,7 +902,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       stdout,stderr = out.communicate()
       if stdout != "" or stdout != "None":
-        guid = stdout.rstrip()
+        guid = stdout.rstrip().decode('ascii')
       else:
         prerror("ERROR: Could not find a deployed service.")
         printback()
@@ -959,6 +984,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         settings = "expiration=7;runtime=168;region=%s;nodes=3;workload=%s;labCode=%s" % (region, workload, labCode)
     else:
       settings = "check=t;autostart=t;noemail=t;region=" + region
+    settings = '%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber' % (settings, city, salesforce)
+    #print ( "DEBUG: %s" % (settings))
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings])
     print ("</pre><center>" )
     print ("If deployment started successfully, wait at least 20 minutes from the output of this message (to complete deployment and GUID generation) then click <a href=%s?operation=update_guids%s>here</a> to update available the available GUIDs database.  Optionally you can use <b>Update Available Lab GUIDs</b> from the main menu.<br><center>" % (myurl, imp) )

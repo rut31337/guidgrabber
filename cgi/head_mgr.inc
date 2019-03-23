@@ -52,7 +52,7 @@ a:active {
 }
 </style>
 
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="/gg/w3.css">
 <style>
 .w3-btn {
   font-size: .5em;

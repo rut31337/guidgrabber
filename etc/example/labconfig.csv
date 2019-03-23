@@ -1,4 +1,4 @@
-code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared,workload,region
+code,description,activationkey,bastion,docurl,urls,catname,catitem,labuser,labsshkey,environment,blueprint,shared,workload,region,salesforce,city
 "L1007","lab L1007","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1007.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1007","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
 "L1017","lab L1017","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1017.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1017","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"
 "L1023","lab L1023","testing","bastion-REPL.rhpds.opentlc.com","https://github.com/dox/L1023.adoc","www-REPL.rhpds.opentlc.com","Test Catalog","L1023","mylabuser","https://www.opentlc.com/keys/test.pem","rhpds","None"

@@ -30,3 +30,17 @@ function goBack() {
     window.history.back();
 }
 </script>
+
+<link rel="stylesheet" href="/gg/w3.css">
+<style>
+.w3-btn {
+  font-size: .8em;
+}
+</style>
+
+<style type="text/css" xml:space="preserve">
+// BODY, P,TD{ font-family: Arial,Verdana,Helvetica, sans-serif; font-size: 10pt }
+//A{font-family: Arial,Verdana,Helvetica, sans-serif;}
+//B {     font-family : Arial, Helvetica, sans-serif;     font-size : 12px;       font-weight : bold;}
+.error_strings{ font-family:Verdana; font-size:14px; color:#660000; background-color:#ff0;}
+</style>

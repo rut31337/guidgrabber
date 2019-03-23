@@ -100,11 +100,12 @@ if itName != "N/A" and itName != "None" and itName != "":
       for cab in svc['custom_attributes']:
         if cab['name'] == 'GUID':
           guid = cab['value']
-        if cab['name'] == 'labCode':
-          lc = cab['value']
-        if cab['name'] == 'service_status':
-          status = cab['value']
-      if guid != "" and lc == labCode and status == "complete":
+        #if cab['name'] == 'labCode':
+        #  lc = cab['value']
+        #if cab['name'] == 'service_status':
+        #  status = cab['value']
+      #if guid != "" and lc == labCode and status == "complete":
+      if guid != "":
         print(guid)
         exit ()
 
