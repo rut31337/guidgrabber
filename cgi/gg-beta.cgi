@@ -4,7 +4,7 @@ import csv
 import cgi
 import requests
 import urllib.request, urllib.parse, urllib.error
-import http.cookies
+from http import cookies
 import datetime
 import random
 import os
@@ -25,7 +25,7 @@ def print_reset():
 <script>
 function rusure() {
     var txt;
-    if (confirm("Warning: You should only do this if you just arrived to the lab session and are ready to begin or you are done with your lab entirely.  If you are sure click OK below otherwise, click Cancel.")) {
+    if (confirm("Warning: You should only do this if it is requested by a lab assistant.  You will lose your current session information.  If you are sure click OK below otherwise, click Cancel.")) {
       window.location.href = "%s?profile=%s&operation=reset";
     }
 }
@@ -36,6 +36,7 @@ def printback():
   print('<br><button onclick="goBack()">< Go Back</button>')
 
 def callredirect(redirectURL, waittime=0):
+  print("Content-type:text/html\r\n\r\n")
   print('<head>')
   print(('  <meta http-equiv="refresh" content="%s;url=%s" />' % (waittime, redirectURL)))
   #print('DEBUG:  redirect to ="%s;url=%s" />' % (waittime, redirectURL))
@@ -45,41 +46,46 @@ def includehtml(fname):
   with open(fname, 'r', encoding='utf-8') as fin:
     print((fin.read()))
 
-def printheader(redirect=False, redirectURL="", waittime="0", operation="requestguid", guid="", labCode="", appID="", sandboxZone=""):
+def printheader(redirect=False, redirectURL="", waittime="0", operation="requestguid", guid="", labCode="", appID="", sandboxZone="", email=""):
   if operation == "reset":
-      expiration = datetime.datetime.now()
-      et = expiration.strftime("%a, %d-%b-%Y %H:%M:%S")
-      c = http.cookies.SimpleCookie()
+      expiration = datetime.datetime.utcnow()
+      et = expiration.strftime("%a, %d-%b-%Y %H:%M:%S GMT;")
+      c = cookies.SimpleCookie()
       c["summitlabguid"] = ""
+      c["summitlabguid"]["path"] = '/'
+      c["summitlabguid"]["domain"] = 'opentlc.com'
       c["summitlabguid"]["expires"] = et
+      c["summitemail"] = ""
+      c["summitemail"]["path"] = '/'
+      c["summitemail"]["domain"] = 'opentlc.com'
+      c["summitemail"]["expires"] = et
       c["summitlabcode"] = ""
+      c["summitlabcode"]["path"] = '/'
+      c["summitlabcode"]["domain"] = 'opentlc.com'
       c["summitlabcode"]["expires"] = et
-      c["summitappid"] = ""
-      c["summitappid"]["expires"] = et
-      c["sandboxzone"] = ""
-      c["sandboxzone"]["expires"] = et
       print(c)
   elif operation == "setguid":
-    if guid != "":
-      expiration = datetime.datetime.now() + datetime.timedelta(hours=2)
-      et = expiration.strftime("%a, %d-%b-%Y %H:%M:%S")
-      c = http.cookies.SimpleCookie()
+    if guid != "" and email != "":
+      expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+      et = expiration.strftime("%a, %d-%b-%Y %H:%M:%S GMT;")
+      c = cookies.SimpleCookie()
       c["summitlabguid"] = guid
+      c["summitlabguid"]["path"] = '/'
+      c["summitlabguid"]["domain"] = 'opentlc.com'
       c["summitlabguid"]["expires"] = et
-      if labCode != "":
-        c["summitlabcode"] = labCode
-        c["summitlabcode"]["expires"] = et
-      if appID != "":
-        c["summitappid"] = appID
-        c["summitappid"]["expires"] = et
-      if sandboxZone != "":
-        c["sandboxzone"] = sandboxZone
-        c["sandboxzone"]["expires"] = et
+      c["summitemail"] = email
+      c["summitemail"]["path"] = '/'
+      c["summitemail"]["domain"] = 'opentlc.com'
+      c["summitemail"]["expires"] = et
+      c["summitlabcode"] = labCode
+      c["summitlabcode"]["path"] = '/'
+      c["summitlabcode"]["domain"] = 'opentlc.com'
+      c["summitlabcode"]["expires"] = et
       print(c)
-  print("Content-type:text/html\r\n\r\n")
   if redirect and redirectURL != "":
     callredirect(redirectURL, waittime)
     exit()
+  print("Content-type:text/html\r\n\r\n")
   print('<html><head>')
   print("""
 <script>
@@ -181,26 +187,31 @@ else:
 if operation == "requestguid":
   if 'HTTP_COOKIE' in os.environ:
     cookie_string=os.environ.get('HTTP_COOKIE')
-    c = http.cookies.SimpleCookie()
+    c = cookies.SimpleCookie()
     c.load(cookie_string)
     try:
       cguid = c['summitlabguid'].value
     except:
       cguid = ""
     try:
+      cemail = c['summitemail'].value
+    except:
+      cemail = ""
+    try:
       clabCode = c['summitlabcode'].value
     except:
       clabCode = ""
-    try:
-      cappID = c['summitappid'].value
-    except:
-      cappID = ""
-    try:
-      csandboxZone = c['sandboxzone'].value
-    except:
-      csandboxZone = ""
-    if cguid != "" and clabCode != "":
-      redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,cguid,clabCode,cappID,csandboxZone)
+    #try:
+    #  cappID = c['summitappid'].value
+    #except:
+    #  cappID = ""
+    #try:
+    #  csandboxZone = c['summitsandboxzone'].value
+    #except:
+    #  csandboxZone = ""
+    if cguid != "" and clabCode != "" and cemail != "":
+      #redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,cguid,clabCode,cappID,csandboxZone)
+      redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&email=%s" % (myurl,profile,cguid,clabCode,cemail)
       printheader(True, redirectURL, "0", operation)
       exit()
   foundlabs = False
@@ -215,6 +226,7 @@ if operation == "requestguid":
         foundlabs = True
         fl[row['code']] = row['description']
   printheader()
+  print("<br>DEBUG no cookie<br>")
   print('<script language="JavaScript" src="' + ggHtmlRoot + '/gen_validatorv4.js" type="text/javascript" xml:space="preserve"></script>')
   print("<center><table width=60% border=0>")
   if profile == "generic_tester":
@@ -231,7 +243,7 @@ if operation == "requestguid":
     print("</select></td></tr>")
     print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>Activation Key:</th><td width=80%><div id='requestAccess_actkey_errorloc' class='error_strings'></div><input type='text' name='actkey'></td></tr>")
     print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address:</th><td width=80%><div id='requestAccess_email1_errorloc' class='error_strings'></div><input type='text' name='email1'></td></tr>")
-    print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address:</th><td width=80%><div id='requestAccess_email2_errorloc' class='error_strings'></div><input type='text' name='email2'></td></tr>")
+    print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address (Again):</th><td width=80%><div id='requestAccess_email2_errorloc' class='error_strings'></div><input type='text' name='email2'></td></tr>")
     print('<tr><td colspan=2><ul>')
     print('<li><div style="color: black; font-size: .9em;">Please choose the lab code for this session, enter the activation key, and your e-mail address then click <b>Submit</b>.</div></li>')
     print('<li><div style="color: black; font-size: .9em;">You may need to refresh this page if you do not see an option for this lab session in the dropdown.</div></li>')
@@ -365,7 +377,8 @@ elif operation == "searchguid":
             sandboxZone = allrow['sandboxzone']
           break
   if foundGuid != "":
-    redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
+    #redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s&email=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone,email)
+    redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&email=%s" % (myurl,profile,foundGuid,labCode,email)
     printheader(True, redirectURL, "0", operation)
     exit()
   assignedGuid = False
@@ -414,7 +427,7 @@ elif operation == "searchguid":
     printheader(True, redirectURL, "0", operation)
     exit()
   else:
-    redirectURL="%s?profile=%s&operation=setguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
+    redirectURL="%s?profile=%s&operation=setguid&guid=%s&labcode=%s&email=%s" % (myurl,profile,foundGuid,labCode,email)
     printheader(True, redirectURL, "0")
     exit()
 elif operation == "setguid":
@@ -431,23 +444,31 @@ elif operation == "setguid":
     printback()
     printfooter()
     exit ()
+  if 'email' not in form:
+    printheader()
+    print("ERROR, no email provided.")
+    printback()
+    printfooter()
+    exit ()
   foundGuid = form.getvalue('guid')
+  email = form.getvalue('email')
   #if 'appid' not in form:
   #  printheader()
   #  print("ERROR, no appid provided.")
   #  printback()
   #  printfooter()
   #  exit ()
-  if 'appid' in form:
-    appID = form.getvalue('appid')
-  else:
-    appID = ""
-  if 'sandboxzone' in form:
-    sandboxZone = form.getvalue('sandboxzone')
-  else:
-    sandboxZone = ""
-  redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone)
-  printheader(True, redirectURL, "0", operation, foundGuid, labCode, appID, sandboxZone)
+  #if 'appid' in form:
+  #  appID = form.getvalue('appid')
+  #else:
+  #  appID = ""
+  #if 'sandboxzone' in form:
+  #  sandboxZone = form.getvalue('sandboxzone')
+  #else:
+  #  sandboxZone = ""
+  redirectURL="%s?profile=%s" % (myurl, profile)
+  #&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s&email=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone,email)
+  printheader(True, redirectURL, "0", operation, foundGuid, labCode, email=email)
   exit()
 elif operation == "showguid":
   if 'labcode' not in form:
@@ -474,6 +495,7 @@ elif operation == "showguid":
   sharedGUID = ""
   shared = False
   environment = ""
+  surveyLink = ""
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -486,6 +508,7 @@ elif operation == "showguid":
         labUser = row['labuser']
         labSSHkey = row['labsshkey']
         environment = row['environment']
+        surveyLink = row['surveylink']
         if 'shared' in row and row['shared'] != "None" and row['shared'] != "":
           guidType = "number"
           shared = True
@@ -494,7 +517,7 @@ elif operation == "showguid":
         break
   if not found:
     print("Unexpected ERROR: This lab no longer exists. Please contact lab assistant.<br>")
-    print("Only if <b>directed by lab assistant</b> click this button: <button onclick='rusure()'>RESET STATION</button>")
+    print("Only if <b>directed by lab assistant</b> click this button: <button onclick='rusure()'>FORGET SESSION</button>")
     printback()
     printfooter()
     exit()
@@ -575,12 +598,14 @@ elif operation == "showguid":
     #print("<li>You can access your detailed lab environment information at <a href='https://www.opentlc.com/summit-status/status.php?appid=%s&guid=%s' target='_blank'>here</a></li>" % (appid,guid))
     consoleURL="https://www.opentlc.com/cgi-bin/dashboard.cgi?guid=%s&appid=%s" % (guid,appid)
     print(("<li>If <b>required</b> by the lab instructions, you can reach your environment's power control and consoles by clicking: <a href='%s' target='_blank'>here</a></li>" % consoleURL))
+  if surveyLink != "":
+    print(("<li>Click <a href='%s' target='_blank'>here</a> to fill out a survey about this lab after you are done.</li>" % surveyLink))
   print("</ul></td></tr></table>")
   if environment == "spp" and profile == "generic_sko":
     print("<table border=0><tr><td align=right><font size=3>OpenShift administrator user:&nbsp;</font></td><td><font size=3><pre>admin</pre></font></td></tr>")
     print("<tr><td align=right><font size=3>OpenShift administrator password:&nbsp;</font></td><td><font size=3><pre>r3dh4t1!</pre></font></td></tr></table>")
-  print("<p>When you are <b>completely finished</b> with this lab please click the <b>RESET STATION</b> button below.</p>")
-  print("<button onclick='rusure()'>RESET STATION</button>")
+  print("<p style='color: black; font-size: .9em;'>WARNING: You should only click FORGET SESSION if <b>requested</b> to do so by a lab attendant.</p>")
+  print("<button onclick='rusure()'>FORGET SESSION</button>")
   print("</center>")
   printfooter(operation)
 else:
