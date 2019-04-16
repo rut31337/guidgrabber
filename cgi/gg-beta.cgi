@@ -101,38 +101,39 @@ if (/Edge/.test(navigator.userAgent)) {
 
 </script>
 """)
+  if "summit" in profile or profile == "generic_tester":
+    includehtml('head-gg-summit.inc')
+  else:
+    includehtml('head-gg.inc')
   if operation == "showguid":
-    includehtml('head.inc')
     print_reset()
   elif operation == "searchguid":
-    includehtml('head3.inc')
-  else:
-    includehtml('head.inc')
+    includehtml('head-gg-redirect.inc')
   print('</head>')
   if operation == "showguid":
     if "summit" in profile or profile == "generic_tester":
-      includehtml('topbar2-summit.inc')
+      includehtml('topbar-summit.inc')
     elif profile == "generic_sko":
-      includehtml('topbar2-sko.inc')
+      includehtml('topbar-sko.inc')
     else:
-      includehtml('topbar2.inc')
-    includehtml('textarea2.inc')
+      includehtml('topbar-old.inc')
+    includehtml('textarea-gg-showguid.inc')
   elif operation == "searchguid":
-    includehtml('topbar3.inc')
+    includehtml('topbar-gg-redirect.inc')
   else:
     if "summit" in profile or profile == "generic_tester":
       includehtml('topbar-summit.inc')
     elif profile == "generic_sko":
       includehtml('topbar-sko.inc')
     else:
-      includehtml('topbar.inc')
-    includehtml('textarea.inc')
+      includehtml('topbar-old.inc')
+    includehtml('textarea-gg.inc')
 
 def printfooter(operation="requestguid"):
-  if operation == "showguid":
-    includehtml('footer.inc')
+  if "summit" in profile or profile == "generic_tester":
+    includehtml('footer-gg-summit.inc')
   else:
-    includehtml('footer.inc')
+    includehtml('footer-gg-old.inc')
   print('</body>')
   print('</html>')
   exit()
@@ -226,7 +227,7 @@ if operation == "requestguid":
         foundlabs = True
         fl[row['code']] = row['description']
   printheader()
-  print("<br>DEBUG no cookie<br>")
+  #print("<br>DEBUG no cookie<br>")
   print('<script language="JavaScript" src="' + ggHtmlRoot + '/gen_validatorv4.js" type="text/javascript" xml:space="preserve"></script>')
   print("<center><table width=60% border=0>")
   if profile == "generic_tester":
@@ -237,18 +238,19 @@ if operation == "requestguid":
     if 'msg' in form:
       print(('<tr><td colspan=2><p style="color: black; font-size: 1.2em;">' + form.getvalue('msg') + "</p></td></tr><tr><td>&nbsp;</td></tr>"))
     print("<form id='requestAccess' name='requestAccess' method='post' action='%s?operation=searchguid'>" % myurl)
+    print('<tr><td colspan=2><center><div style="color: black; font-size: .9em;">Please choose the lab code for this session, enter the activation key, and your e-mail address then click <b>Submit</b>.</div></center></td></tr>')
     print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>Lab Code:</th><td width=80%><select name='labcode'>")
     for k in sorted(fl):
       print(('<option value="{0}">{0} - {1}</option>'.format(k,fl[k])))
     print("</select></td></tr>")
     print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>Activation Key:</th><td width=80%><div id='requestAccess_actkey_errorloc' class='error_strings'></div><input type='text' name='actkey'></td></tr>")
     print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address:</th><td width=80%><div id='requestAccess_email1_errorloc' class='error_strings'></div><input type='text' name='email1'></td></tr>")
-    print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address (Again):</th><td width=80%><div id='requestAccess_email2_errorloc' class='error_strings'></div><input type='text' name='email2'></td></tr>")
+    #print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address (Again):</th><td width=80%><div id='requestAccess_email2_errorloc' class='error_strings'></div><input type='text' name='email2'></td></tr>")
+    print('<tr><td colspan=2><center><div style="color: black; font-size: .6em;">All fields are <b>required</b>.</div></center></td></tr>')
     print('<tr><td colspan=2><ul>')
-    print('<li><div style="color: black; font-size: .9em;">Please choose the lab code for this session, enter the activation key, and your e-mail address then click <b>Submit</b>.</div></li>')
+    print('<li><div style="color: black; font-size: .9em;"><b>We will not e-mail you and your e-mail address will be deleted from this system after this session is over</b>. It is only used for tracking this session.</div></li>')
     print('<li><div style="color: black; font-size: .9em;">You may need to refresh this page if you do not see an option for this lab session in the dropdown.</div></li>')
     print('<li><div style="color: black; font-size: .9em;">If you are unsure which lab code to choose or what the activation key is please notify a lab assistant.</div></li>')
-    print('<li><div style="color: black; font-size: .9em;">All fields are <b>required</b>. Red Hat will <b>not</b> store or share the entered e-mail address after this session is over or <i>ever</i> e-mail you, this is for tracking of this session only.</div></li>')
     print('</ul></td></tr>')
     print('<tr><td colspan=2 align=center><input class="w3-btn w3-white w3-border w3-padding-small" type="submit" value="Submit&nbsp;"></td></tr>')
     print('<input type="hidden" id="ipaddr" name="ipaddr" />')
@@ -257,7 +259,7 @@ if operation == "requestguid":
     print("""
 <script language="JavaScript" type="text/javascript"
     xml:space="preserve">
-function DoCustomValidation()
+/* function DoCustomValidation()
 {
   var frm = document.forms["requestAccess"];
   if(frm.email1.value != frm.email2.value)
@@ -269,19 +271,19 @@ function DoCustomValidation()
   {
     return true;
   }
-}
+} */
 //<![CDATA[
     var frmvalidator  = new Validator("requestAccess");
     frmvalidator.EnableOnPageErrorDisplay();
     frmvalidator.EnableMsgsTogether();
+    frmvalidator.addValidation("actkey","req","Required Field");
     frmvalidator.addValidation("email1","maxlen=50");
     frmvalidator.addValidation("email1","email","Enter Valid E-Mail Address");
     frmvalidator.addValidation("email1","req","Required Field");
-    frmvalidator.addValidation("email2","maxlen=50");
+    /*frmvalidator.addValidation("email2","maxlen=50");
     frmvalidator.addValidation("email2","email","Enter Valid E-Mail Address");
     frmvalidator.addValidation("email2","req","Required Field");
-    frmvalidator.addValidation("actkey","req","Required Field");
-    frmvalidator.setAddnlValidationFunction(DoCustomValidation);
+    frmvalidator.setAddnlValidationFunction(DoCustomValidation);*/
 // ]]>
 </script>
 """)
@@ -331,17 +333,17 @@ elif operation == "searchguid":
     printfooter()
     exit ()
   email1 = form.getvalue('email1')
-  if 'email2' not in form:
-    print("ERROR, no E-mail provided.")
-    printback()
-    printfooter()
-    exit ()
-  email2 = form.getvalue('email2')
-  if email1 != email2:
-    print("ERROR, E-mail addresses do not match.")
-    printback()
-    printfooter()
-    exit ()
+  #if 'email2' not in form:
+  #  print("ERROR, no E-mail provided.")
+  #  printback()
+  #  printfooter()
+  #  exit ()
+  #email2 = form.getvalue('email2')
+  #if email1 != email2:
+  #  print("ERROR, E-mail addresses do not match.")
+  #  printback()
+  #  printfooter()
+  #  exit ()
   email = email1
   if actkey == 'loadtest' and loadTestActive:
     activated = True
