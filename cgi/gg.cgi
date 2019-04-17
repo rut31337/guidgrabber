@@ -202,16 +202,7 @@ if operation == "requestguid":
       clabCode = c['summitlabcode'].value
     except:
       clabCode = ""
-    #try:
-    #  cappID = c['summitappid'].value
-    #except:
-    #  cappID = ""
-    #try:
-    #  csandboxZone = c['summitsandboxzone'].value
-    #except:
-    #  csandboxZone = ""
     if cguid != "" and clabCode != "" and cemail != "":
-      #redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s" % (myurl,profile,cguid,clabCode,cappID,csandboxZone)
       redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&email=%s" % (myurl,profile,cguid,clabCode,cemail)
       printheader(True, redirectURL, "0", operation)
       exit()
@@ -244,8 +235,7 @@ if operation == "requestguid":
       print(('<option value="{0}">{0} - {1}</option>'.format(k,fl[k])))
     print("</select></td></tr>")
     print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>Activation Key:</th><td width=80%><div id='requestAccess_actkey_errorloc' class='error_strings'></div><input type='text' name='actkey'></td></tr>")
-    print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address:</th><td width=80%><div id='requestAccess_email1_errorloc' class='error_strings'></div><input type='text' name='email1'></td></tr>")
-    #print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address (Again):</th><td width=80%><div id='requestAccess_email2_errorloc' class='error_strings'></div><input type='text' name='email2'></td></tr>")
+    print("<tr><th style='color: black; font-size: .9em;' width=30% align=right>E-Mail Address:</th><td width=80%><div id='requestAccess_email_errorloc' class='error_strings'></div><input type='text' name='email'></td></tr>")
     print('<tr><td colspan=2><center><div style="color: black; font-size: .6em;">All fields are <b>required</b>.</div></center></td></tr>')
     print('<tr><td colspan=2><ul>')
     print('<li><div style="color: black; font-size: .9em;"><b>Unless your event organizer says otherwise, we will not e-mail you and your e-mail address will be deleted from this system after this session is over</b>. Normally it is only used for tracking this session.</div></li>')
@@ -259,30 +249,14 @@ if operation == "requestguid":
     print("""
 <script language="JavaScript" type="text/javascript"
     xml:space="preserve">
-/* function DoCustomValidation()
-{
-  var frm = document.forms["requestAccess"];
-  if(frm.email1.value != frm.email2.value)
-  {
-    sfm_show_error_msg('The E-Mail addresses do not match!',frm.email1);
-    return false;
-  }
-  else
-  {
-    return true;
-  }
-} */
 //<![CDATA[
     var frmvalidator  = new Validator("requestAccess");
     frmvalidator.EnableOnPageErrorDisplay();
     frmvalidator.EnableMsgsTogether();
     frmvalidator.addValidation("actkey","req","Required Field");
-    frmvalidator.addValidation("email1","maxlen=50");
-    frmvalidator.addValidation("email1","email","Enter Valid E-Mail Address");
-    frmvalidator.addValidation("email1","req","Required Field");
-    /*frmvalidator.addValidation("email2","maxlen=50");
-    frmvalidator.addValidation("email2","email","Enter Valid E-Mail Address");
-    frmvalidator.addValidation("email2","req","Required Field");
+    frmvalidator.addValidation("email","maxlen=50");
+    frmvalidator.addValidation("email","email","Enter Valid E-Mail Address");
+    frmvalidator.addValidation("email","req","Required Field");
     frmvalidator.setAddnlValidationFunction(DoCustomValidation);*/
 // ]]>
 </script>
@@ -327,24 +301,12 @@ elif operation == "searchguid":
     printfooter()
     exit ()
   ipaddr = form.getvalue('ipaddr')
-  if 'email1' not in form:
+  if 'email' not in form:
     print("ERROR, no E-mail provided.")
     printback()
     printfooter()
     exit ()
-  email1 = form.getvalue('email1')
-  #if 'email2' not in form:
-  #  print("ERROR, no E-mail provided.")
-  #  printback()
-  #  printfooter()
-  #  exit ()
-  #email2 = form.getvalue('email2')
-  #if email1 != email2:
-  #  print("ERROR, E-mail addresses do not match.")
-  #  printback()
-  #  printfooter()
-  #  exit ()
-  email = email1
+  email = form.getvalue('email')
   if actkey == 'loadtest' and loadTestActive:
     activated = True
   else:
@@ -361,8 +323,6 @@ elif operation == "searchguid":
     printheader(True, redirectURL, "0", operation)
     exit()
   foundGuid = ""
-  appID = ""
-  sandboxZone = ""
   with open(assignedCSV, encoding='utf-8') as ipfile:
     iplocks = csv.DictReader(ipfile)
     for row in iplocks:
@@ -370,16 +330,6 @@ elif operation == "searchguid":
         foundGuid = row['guid']
         break
   if foundGuid != "":
-    with open(allGuidsCSV, encoding='utf-8') as allfile:
-      allf = csv.DictReader(allfile)
-      for allrow in allf:
-        if allrow['guid'] == foundGuid:
-          appID = allrow['appid']
-          if 'sandboxzone' in allrow:
-            sandboxZone = allrow['sandboxzone']
-          break
-  if foundGuid != "":
-    #redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&appid=%s&sandboxzone=%s&email=%s" % (myurl,profile,foundGuid,labCode,appID,sandboxZone,email)
     redirectURL="%s?profile=%s&operation=showguid&guid=%s&labcode=%s&email=%s" % (myurl,profile,foundGuid,labCode,email)
     printheader(True, redirectURL, "0", operation)
     exit()
@@ -414,14 +364,6 @@ elif operation == "searchguid":
     ipfile = open(assignedCSV, 'a', encoding='utf-8')
     ipfile.write(foundGuid + "," + ipaddr + "," + email + "\n")
     assignedGuid = True
-    with open(allGuidsCSV, encoding='utf-8') as allfile:
-      allf = csv.DictReader(allfile)
-      for allrow in allf:
-        if allrow['guid'] == foundGuid:
-          appID = allrow['appid']
-          if 'sandboxzone' in allrow:
-            sandboxZone = allrow['sandboxzone']
-          break
   fcntl.flock(ipfile, fcntl.LOCK_UN)
   if not assignedGuid:
     msg=urllib.parse.quote("Sorry, there are no available GUIDs for lab <b>{0}</b>, please double check that you selected the correct lab code or contact a lab assistant.".format(labCode))
@@ -480,28 +422,14 @@ elif operation == "showguid":
     printfooter()
     exit()
   printheader(False, "", "", operation)
+  if 'guid' not in form:
+    print("Unexpected ERROR: no GUIDs found. Please contact lab assistant.")
+    printback()
+    printfooter()
+    exit()
   guid = form.getvalue('guid')
   labCode = form.getvalue('labcode')
-  sandboxZone = ""
-  serviceType = ""
-  appID = ""
-  allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
-  if not os.path.exists(allGuidsCSV):
-    msg=urllib.parse.quote("ERROR, No guids for lab code <b>{0}</b> exist.".format(labCode))
-    redirectURL="%s?profile=%s&msg=%s" % (myurl,profile,msg)
-    printheader(True, redirectURL, "0", operation)
-    exit()
-  with open(allGuidsCSV, encoding='utf-8') as allfile:
-    allf = csv.DictReader(allfile)
-    for allrow in allf:
-      if allrow['guid'] == guid:
-        if 'appid' in allrow and allrow['appid']:
-          appID = allrow['appid']
-        if 'sandboxzone' in allrow and allrow['sandboxzone']:
-          sandboxZone = allrow['sandboxzone']
-        if 'servicetype' in allrow and allrow['servicetype']:
-          serviceType = allrow['servicetype']
-        break
+
   bastion = ""
   docURL = ""
   description = ""
@@ -510,10 +438,9 @@ elif operation == "showguid":
   labSSHkey = ""
   found = False
   guidType = "GUID"
-  sharedGUID = ""
-  shared = False
   environment = ""
   surveyLink = ""
+  shared = False
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -527,11 +454,9 @@ elif operation == "showguid":
         labSSHkey = row['labsshkey']
         environment = row['environment']
         surveyLink = row['surveylink']
-        if 'shared' in row and row['shared'] != "None" and row['shared'] != "":
-          guidType = "number"
+        if 'servicetype' in row and row['servicetype'] == "agnosticd-shared":
           shared = True
-          if 'appid' in form:
-            sharedGUID = form.getvalue('appid')
+          guidType = 'number'
         break
   if not found:
     print("Unexpected ERROR: This lab no longer exists. Please contact lab assistant.<br>")
@@ -539,16 +464,33 @@ elif operation == "showguid":
     printback()
     printfooter()
     exit()
-  if 'guid' not in form:
-    print(("Unexpected ERROR: no %s found. Please contact lab assistant." % guidType))
+
+  sandboxZone = ""
+  appID = ""
+  sharedGUID = ""
+  allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
+  if not os.path.exists(allGuidsCSV):
+    print("ERROR, No guids for lab code <b>{0}</b> exist at this time.<br>".format(labCode))
     printback()
     printfooter()
     exit()
+  with open(allGuidsCSV, encoding='utf-8') as allfile:
+    allf = csv.DictReader(allfile)
+    for allrow in allf:
+      if allrow['guid'] == guid:
+        if 'appid' in allrow and allrow['appid']:
+          appID = allrow['appid']
+          if shared:
+            sharedGUID = appID
+        if 'sandboxzone' in allrow and allrow['sandboxzone']:
+          sandboxZone = allrow['sandboxzone']
+        break
+
   print("<center><table border=0>")
   print("<tr><td>")
   print(("<center><h2>Welcome to: %s</h2><table border=0>" % description))
   print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (guidType,guid)))
-  if shared and sharedGUID != "":
+  if shared:
     print(("<tr><td align=right>Your shared lab GUID is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
   print("</table></center>" )
   print("Let's get started! Please read these instructions carefully before starting to have the best lab experience:")
@@ -590,18 +532,19 @@ elif operation == "showguid":
       print(("<li>If lab requires the use of the SSH command it would look like this:<br><pre>ssh host-{0}.rhpds.opentlc.com</pre></li>".format(guid)))
     #print("<li><b>Note:</b>These are <b>just examples</b>, please consult the lab instructions for actual host names and URLs.</li>")
   if urls != "" and urls != "None":
-    print("<li>The following URLs will be used in your lab environment. Please only access these links when the lab instructions specify to do so:<ul>")
+    print("<li>The following URLs and information will be used in your lab environment. Please only access these links when the lab instructions specify to do so:<ul>")
     for u in urls.split(";"):
       if sandboxZone != "":
         u = u.replace('DOMAIN', sandboxZone)
       if shared and sharedGUID != "":
         u = u.replace('REPL', sharedGUID)
+        u = u.replace('X', guid)
       else:
         u = u.replace('REPL', guid)
       if u.startswith("*"):
         print(("<li>Wildcard DNS entry: <b>{0}</b></li>".format(u)))
       elif u.startswith("http"):
-        print(("<li><a href='{0}' target='_blank'>{0}</a></li>".format(u)))
+        print(("<li><b><a href='{0}' target='_blank'>{0}</a></b></li>".format(u)))
       elif ':' in u:
         t, u2 = u.split(':', 1)
         #print("<li><b>%s:</b>&nbsp;<a href='%s' target='_blank'>%s</a></li>" % (t, u2, u2))
