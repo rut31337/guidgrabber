@@ -218,15 +218,16 @@ tr.brd{
   if operation == 'update_lab':
     print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Code*:</b></td><td style='font-size: 0.6em;'><input type='hidden' name='labcode' size='20' value='%s'>%s</td></tr>" % (labcode, labcode) )
   else:
-    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Code (Alphanumeric Only)*:</b></td><td><input type='text' name='labcode' size='20'></td></tr>" )
+    print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Code (Alphanumeric Only)*:</b></td><td><input type='text' name='labcode' size='20'></td></tr>" )
   if spp:
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Name*:</b></td><td style='font-size: 0.6em;'><input type='hidden' name='labname' size='80' value='%s'>%s</td></tr>" % (labname, labname) )
   else:
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Name*:</b></td><td><input type='text' name='labname' size='80' value='%s'></td></tr>" %  labname )
-  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Key*:</b></td><td><input type='text' name='labkey' size='20' value='%s'></td></tr>" % labkey )
+  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Key*:</b></td><td><input type='text' name='labkey' size='20' value='%s'></td></tr></tbody>" % labkey )
+
   if spp:
     region = "na"
-  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Region*:</b></td><td><select name='region'>")
+  print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Region*:</b></td><td><select name='region'>")
   na = ""
   apac = ""
   emea = ""
@@ -239,7 +240,15 @@ tr.brd{
   print ("<option value='na' %s>NA</option>" % na )
   print ("<option value='emea' %s>EMEA</option>" % emea)
   print ("<option value='apac' %s>APAC</option>" % apac)
-  print ("</select></td></tr></tbody>")
+  print ("</select></td></tr>")
+  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Environment*:</b></td><td style='font-size: 0.6em;'>" )
+  if spp:
+    print ("<input type='radio' name='environment' value='spp' checked >SPP" )
+  else:
+    print ("<input type='radio' name='environment' value='rhpds' checked >RHPDS" )
+  print ("</td></tr>" )
+  print ("</tbody>")
+
   print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Name*:</b></td><td><select id='catname' onchange=\"setItems(this, document.getElementById('catitems'), '%s')\" name='catname'>" % catitem)
   for catid,cat in catalogs.items():
     if catname == cat:
@@ -263,11 +272,23 @@ tr.brd{
 <input type="radio" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
 <input type="radio" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
 <input type="radio" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
-</td></tr>
-""" % (ravc,agdc, agsc))
-  print ("</tbody>")
+</td></tr></tbody>
+""" % (ravc,agdc,agsc))
   print ("<tbody id='ravello' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>BareMetal (t/f)*:</b></td><td><input type='text' name='baremetal' size='80' value='%s'></td></tr></tbody>" %  bareMetal )
+  bmt = ""
+  bmf = ""
+  if bareMetal == "t":
+    bmt = "checked='checked'"
+  else:
+    bmf = "checked='checked'"
+  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Bare Metal (Nested Virt)*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
+  #print ("<td><input type='text' name='baremetal' size='80' value='%s'></td></tr></tbody>" %  bareMetal )
+  print ("""
+<input type="radio" name="baremetal" %s value="t"/>&nbsp;True&nbsp;|&nbsp;
+<input type="radio" name="baremetal" %s value="f"/>&nbsp;False
+</td></tr>
+""" % (bmt,bmf))
+
   print ("<tbody id='agnosticd' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
   print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
   print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
@@ -292,14 +313,7 @@ tr.brd{
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Event City (lowercase/no spaces):</b></td><td><input type='text' name='city' size='80' value='%s'></td></tr>" % city )
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Salesforce Opportunity ID (If you have one):</b></td><td><input type='text' name='salesforce' size='80' value='%s'></td></tr>" % salesforce )
     print ("</tbody>")
-  print ("<tbody class=tbg>")
-  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Environment*:</b></td><td style='font-size: 0.6em;'>" )
-  if spp:
-    print ("<input type='radio' name='environment' value='spp' checked >SPP" )
-  else:
-    print ("<input type='radio' name='environment' value='rhpds' checked >RHPDS" )
-  print ("</td></tr>" )
-  print ("</tbody>")
+
   print ("<tbody class=tbg>")
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><b>NOTE:</b> For all fields specifying FQDN or URL you can use the string <b>REPL</b> which will be replaced by GUID (ex. bastion-REPL.rhpds.opentlc.com)</td></tr>" )
   print ("<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH in your GUID page</td></tr>" )
@@ -1036,33 +1050,37 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       deleteAssigned = form.getvalue('delete_assigned')
       if deleteAssigned == "on":
         if os.path.exists(assignedCSV):
+          print ("<center>Deleting assigned users...")
           os.remove(assignedCSV)
     if os.path.exists(allGuidsCSV):
       os.remove(allGuidsCSV)
     if shared != "" and shared != "None":
-      print ("<center>Creating %s shared users..." % shared )
+      print ("<center>Searching for GUID for lab code %s" % labCode )
       getguids = ggbin + "getguids.py"
       config = configparser.ConfigParser()
       config.read(cfgfile)
       cfuser = config.get('cloudforms-credentials', 'user')
       cfpass = config.get('cloudforms-credentials', 'password')
-      command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly"]
+      if spp:
+        command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly", "--labcode", labCode]
+      else:
+        command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--labcode", labCode]
       out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       stdout,stderr = out.communicate()
       if stdout != "" or stdout != "None":
         guid = stdout.rstrip().decode('ascii')
-      else:
-        prerror("ERROR: Could not find a deployed service.")
+      if guid == "":
+        prerror("ERROR: Could not find a deployed service in %s." % envirURL)
         printback()
         printfooter()
         exit()
+      print ("<center>Creating %s shared users..." % shared )
       with open(allGuidsCSV, "w", encoding='utf-8') as agc:
         ln = '"guid","appid","servicetype"\n'
         agc.write(ln)
         i = 1
         shr = int(shared)
         while i <= shr:
-          #user = labuser + str(i)
           user = str(i)
           ln = '"%s","%s","%s"\n' % (user, guid, "shared")
           i = i + 1
@@ -1077,7 +1095,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       cfuser = config.get('cloudforms-credentials', 'user')
       cfpass = config.get('cloudforms-credentials', 'password')
       #print ("DEBUG: %s --cfurl %s --cfuser %s --cfpass %s --catalog %s --item %s --out %s --ufilter %s" % (getguids, envirURL, cfuser, cfpass, catName, catItem, allGuidsCSV, profile))
-      if spp and blueprint != "":
+      if spp:
         execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode])
       else:
         execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])

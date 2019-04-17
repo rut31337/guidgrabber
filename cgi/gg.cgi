@@ -429,7 +429,6 @@ elif operation == "showguid":
     exit()
   guid = form.getvalue('guid')
   labCode = form.getvalue('labcode')
-
   bastion = ""
   docURL = ""
   description = ""
@@ -464,7 +463,6 @@ elif operation == "showguid":
     printback()
     printfooter()
     exit()
-
   sandboxZone = ""
   appID = ""
   sharedGUID = ""
