@@ -262,18 +262,22 @@ tr.brd{
   ravc = ""
   agdc = ""
   agsc = ""
+  upc = ""
   if serviceType == 'agnosticd':
     agdc = "checked='checked'"
   elif serviceType == 'agnosticd-shared':
     agsc = "checked='checked'"
+  elif serviceType == 'user-password':
+    upc = "checked='checked'"
   else:
     ravc = "checked='checked'"
   print ("""
 <input type="radio" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
 <input type="radio" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
 <input type="radio" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
+<input type="radio" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
 </td></tr></tbody>
-""" % (ravc,agdc,agsc))
+""" % (ravc,agdc,agsc,upc))
   print ("<tbody id='ravello' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
   bmt = ""
   bmf = ""
@@ -346,6 +350,8 @@ tr.brd{
   elif serviceType == "agnosticd-shared":
     print ("<script>document.getElementById('agnosticd').style.display='table-row-group';</script>")
     print ("<script>document.getElementById('agnosticd-shared').style.display='table-row-group';</script>")
+  elif serviceType == "user-password":
+    print ("<script>document.getElementById('agnosticd-shared').style.display='table-row-group';</script>")
   else:
     print ("<script>document.getElementById('ravello').style.display='table-row-group';</script>")
   print ("""
@@ -363,6 +369,11 @@ function showAgnosticD(){
 function showAgnosticDshared(){
   document.getElementById('ravello').style.display ='none';
   document.getElementById('agnosticd').style.display = 'table-row-group';
+  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
+}
+function showUserPassword(){
+  document.getElementById('ravello').style.display ='none';
+  document.getElementById('agnosticd').style.display = 'none';
   document.getElementById('agnosticd-shared').style.display = 'table-row-group';
 }
 </script>
@@ -1045,6 +1056,11 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     exit()
   if operation == "get_guids":
     printheader()
+    if serviceType == "user-password":
+      print ("<center>User password type not supported.</center>")
+      printback()
+      printfooter()
+      exit()
     assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
     if 'delete_assigned' in form:
       deleteAssigned = form.getvalue('delete_assigned')

@@ -440,6 +440,7 @@ elif operation == "showguid":
   environment = ""
   surveyLink = ""
   shared = False
+  sharedUserPassword = False
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -453,9 +454,13 @@ elif operation == "showguid":
         labSSHkey = row['labsshkey']
         environment = row['environment']
         surveyLink = row['surveylink']
-        if 'servicetype' in row and row['servicetype'] == "agnosticd-shared":
-          shared = True
-          guidType = 'number'
+        if 'servicetype' in row:
+          if row['servicetype'] == "agnosticd-shared":
+            shared = True
+            guidType = 'number'
+          elif row['servicetype'] == "user-password":
+            sharedUserPassword = True
+            guidType = 'user'
         break
   if not found:
     print("Unexpected ERROR: This lab no longer exists. Please contact lab assistant.<br>")
@@ -478,7 +483,7 @@ elif operation == "showguid":
       if allrow['guid'] == guid:
         if 'appid' in allrow and allrow['appid']:
           appID = allrow['appid']
-          if shared:
+          if shared or sharedUserPassword:
             sharedGUID = appID
         if 'sandboxzone' in allrow and allrow['sandboxzone']:
           sandboxZone = allrow['sandboxzone']
@@ -490,6 +495,8 @@ elif operation == "showguid":
   print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (guidType,guid)))
   if shared:
     print(("<tr><td align=right>Your shared lab GUID is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
+  if sharedUserPassword:
+    print(("<tr><td align=right>Your password is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
   print("</table></center>" )
   print("Let's get started! Please read these instructions carefully before starting to have the best lab experience:")
   print(("<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType))
