@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import re
 import csv
 import cgi
 import requests
@@ -502,12 +503,13 @@ elif operation == "showguid":
   print(("<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType))
   print("<li>Consult the lab instructions <i>before</i> attempting to connect to the lab environment.</li>")
   if docURL != "" and docURL != "None":
+    docURL = docURL.replace('DOMAIN', sandboxZone)
     if shared and sharedGUID != "":
       docURL = docURL.replace('REPL', sharedGUID)
       docURL = docURL.replace('X', guid)
     else:
       docURL = docURL.replace('REPL', guid)
-    print(("<li>Open the lab instructions by clicking <a href='%s' target='_blank'>here</a></li>" % docURL))
+    print("<li><b>Lab instructions:</b><ul><li><a href='%s' target='_blank'>%s</a></li></ul></li></li>" % (docURL,docURL))
   if labSSHkey != "" and labSSHkey != "None":
     print(("<li>You can download the lab SSH key from <a href='%s'>here</a>.</li>" % labSSHkey))
     print("<li>Save this key (example filename: keyfile.pem) then run <pre>chmod 0600 keyfile.pem</pre></li>")
@@ -552,10 +554,13 @@ elif operation == "showguid":
         print(("<li><b><a href='{0}' target='_blank'>{0}</a></b></li>".format(u)))
       elif ':' in u:
         t, u2 = u.split(':', 1)
-        #print("<li><b>%s:</b>&nbsp;<a href='%s' target='_blank'>%s</a></li>" % (t, u2, u2))
-        print("<li><b>%s:</b>&nbsp;%s</li>" % (t, u2))
+        if re.search('.*http', u2):
+          u2 = u2.strip()
+          print("<li><b>%s:</b>&nbsp;<a href='%s' target='_blank'>%s</a></li>" % (t, u2, u2))
+        else:
+          print("<li><b>%s:</b>&nbsp;%s</li>" % (t, u2))
       else:
-        print("<li><a href='http://%s' target='_blank'>http://%s</a></li>" % (u, u))
+        print("<li>%s</li>" % (u))
     print("<li>Note: The lab instructions may specify other host names and/or URLs.</li>")
     print("</ul>")
   if bastion == "None" and urls == "None":

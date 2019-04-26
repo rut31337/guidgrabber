@@ -106,9 +106,9 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
   print ('<html><head>' )
   includehtml('head-manager.inc')
   print ('</head>' )
-  if "summit" in profile or profile == "generic_tester":
+  if spp:
     includehtml('topbar-summit.inc')
-  elif profile == "generic_sko":
+  elif sko:
     includehtml('topbar-sko.inc')
   else:
     includehtml('topbar-old.inc')
@@ -122,7 +122,7 @@ def printfooter(operation="none"):
     if impersonate:
       imph = "?impersonate=" + profile
     print ('<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + imph + '\'">Home</button></center>' )
-  if "summit" in profile or profile == "generic_tester":
+  if spp:
     includehtml('footer-manager-summit.inc')
   else:
     includehtml('footer-manager-old.inc')
@@ -258,55 +258,56 @@ tr.brd{
     print ("<option value='%s' %s>%s</option>" % (cat, selected, cat) )
   print ("</select></td></tr>")
   print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem'></select></td></tr></tbody>")
-  print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Service Type*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
-  ravc = ""
-  agdc = ""
-  agsc = ""
-  upc = ""
-  if serviceType == 'agnosticd':
-    agdc = "checked='checked'"
-  elif serviceType == 'agnosticd-shared':
-    agsc = "checked='checked'"
-  elif serviceType == 'user-password':
-    upc = "checked='checked'"
-  else:
-    ravc = "checked='checked'"
-  print ("""
+  if spp:
+    print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Service Type*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
+    ravc = ""
+    agdc = ""
+    agsc = ""
+    upc = ""
+    if serviceType == 'agnosticd':
+      agdc = "checked='checked'"
+    elif serviceType == 'agnosticd-shared':
+      agsc = "checked='checked'"
+    elif serviceType == 'user-password':
+      upc = "checked='checked'"
+    else:
+      ravc = "checked='checked'"
+    print ("""
 <input type="radio" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
 <input type="radio" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
 <input type="radio" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
 <input type="radio" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
 </td></tr></tbody>
 """ % (ravc,agdc,agsc,upc))
-  print ("<tbody id='ravello' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
-  bmt = ""
-  bmf = ""
-  if bareMetal == "t":
-    bmt = "checked='checked'"
-  else:
-    bmf = "checked='checked'"
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Bare Metal (Nested Virt)*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
-  #print ("<td><input type='text' name='baremetal' size='80' value='%s'></td></tr></tbody>" %  bareMetal )
-  print ("""
+    print ("<tbody id='ravello' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
+    bmt = ""
+    bmf = ""
+    if bareMetal == "t":
+      bmt = "checked='checked'"
+    else:
+      bmf = "checked='checked'"
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Bare Metal (Nested Virt)*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
+    #print ("<td><input type='text' name='baremetal' size='80' value='%s'></td></tr></tbody>" %  bareMetal )
+    print ("""
 <input type="radio" name="baremetal" %s value="t"/>&nbsp;True&nbsp;|&nbsp;
 <input type="radio" name="baremetal" %s value="f"/>&nbsp;False
 </td></tr>
 """ % (bmt,bmf))
 
-  print ("<tbody id='agnosticd' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
-  default = ""
-  small = ""
-  if envsize == "small":
-    small = "selected"
-  else:
-    default = "selected"
-  print ("<option value='default' %s>Default</option>" % default)
-  print ("<option value='small' %s>Small</option>" % small)
-  print ("</select></td></tr></tbody>")
-  print ("<tbody id='agnosticd-shared' style='display:none;'>")
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Shared User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr></tbody>" % shared  )
+    print ("<tbody id='agnosticd' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
+    default = ""
+    small = ""
+    if envsize == "small":
+      small = "selected"
+    else:
+      default = "selected"
+    print ("<option value='default' %s>Default</option>" % default)
+    print ("<option value='small' %s>Small</option>" % small)
+    print ("</select></td></tr></tbody>")
+    print ("<tbody id='agnosticd-shared' style='display:none;'>")
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Shared User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr></tbody>" % shared  )
   if spp:
     city = "boston"
     salesforce = "summit"
@@ -378,6 +379,7 @@ function showUserPassword(){
 }
 </script>
 """)
+
 if not os.environ.get('REMOTE_USER'): 
   printheader()
   prerror("ERROR: No profile specified.")
@@ -391,6 +393,16 @@ if profile == "generic_tester" or profile == "generic_sko" or profile == "generi
 else:
   spp = False
   myurl = "/gg/manager.cgi"
+
+if profile == "generic_summit":
+  summit = True
+else:
+  summit = False
+
+if profile == "generic_sko":
+  sko = True
+else:
+  sko = False
 
 ggurl = "https://www.opentlc.com/gg/gg.cgi"
 ggroot = "/var/www/guidgrabber"
@@ -434,10 +446,10 @@ if operation == "none":
   printheader()
   print ("<center><table border=0><tr valign=top><td><table border=0>" )
   if 'msg' in form:
-    print ('<tr><td><p style="color: black; font-size: .7em;">' + form.getvalue('msg') + "</p></td></tr>" )
-  print ("<tr><td style='font-size: .7em;' colspan=2>Choose an operation <b>%s</b>:</td></tr>" % profile )
+    print ('<tr><td><p style="color: black; font-size: .8em;">' + form.getvalue('msg') + "</p></td></tr>" )
+  print ("<tr><td style='font-size: .8em;' colspan=2>Choose an operation <b>%s</b>:</td></tr>" % profile )
   if not spp:
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=create_new_lab_form%s>Add A New Lab Configuration</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .8em;'><a href=%s?operation=create_new_lab_form%s>Add A New Lab Configuration</a></td></tr>" % (myurl, imp) )
   found = False
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labcodes = csv.DictReader(csvFile)
@@ -448,19 +460,20 @@ if operation == "none":
         found = True
         break
   if os.path.exists(labConfigCSV) and found:
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=edit_lab%s>View/Edit Lab Configuration</a></td></tr>" % (myurl, imp) )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=deploy_lab%s>Deploy Lab Instances</a></td></tr>" % (myurl, imp) )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=update_guids%s>Update Available Lab GUIDs</a></td></tr>" % (myurl, imp) )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=choose_lab%s>Manage Lab</a></td></tr>" % (myurl, imp) )
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=delete_instance%s>Delete Lab Instances</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .8em;'><a href=%s?operation=edit_lab%s>View/Edit Lab Configuration</a></td></tr>" % (myurl, imp) )
+    if not summit:
+      print ("<tr><td style='font-size: .8em;'><a href=%s?operation=deploy_lab%s>Deploy Lab Instances</a></td></tr>" % (myurl, imp) )
+      print ("<tr><td style='font-size: .8em;'><a href=%s?operation=update_guids%s>Update Available Lab GUIDs</a></td></tr>" % (myurl, imp) )
+      print ("<tr><td style='font-size: .8em;'><a href=%s?operation=delete_instance%s>Delete Lab Instances</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .8em;'><a href=%s?operation=choose_lab%s>Manage Lab</a></td></tr>" % (myurl, imp) )
     if not spp:
-      print ("<tr><td style='font-size: .7em;'><a href=%s?operation=delete_lab%s>Delete Lab Configuration</a></td></tr>" % (myurl, imp) )
+      print ("<tr><td style='font-size: .8em;'><a href=%s?operation=delete_lab%s>Delete Lab Configuration</a></td></tr>" % (myurl, imp) )
   print ('</table></td>')
   if admin:
-    print ("<td><table border=0><tr><td style='font-size: .7em;'>Admin Functions:</td></tr>")
-    print ("<tr><td style='font-size: .7em;'><a href=%s?operation=impersonate>Impersonate User</a></td></tr>" % myurl )
+    print ("<td><table border=0><tr><td style='font-size: .8em;'>Admin Functions:</td></tr>")
+    print ("<tr><td style='font-size: .8em;'><a href=%s?operation=impersonate>Impersonate User</a></td></tr>" % myurl )
     if impersonate:
-      print ("<tr><td style='font-size: .7em;'><a href=%s>Un-Impersonate User</a></td></tr>" % myurl )
+      print ("<tr><td style='font-size: .8em;'><a href=%s>Un-Impersonate User</a></td></tr>" % myurl )
     print ("</table></td>")
   print ('</tr></table>')
   if os.path.exists(labConfigCSV) and found:
@@ -584,7 +597,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   ln = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (labCode, labName, labKey, bastion, docURL, labURLs, catName, catItem, labUser, labSSHkey, environment, blueprint, shared, infraWorkload, region, city, salesforce, surveyLink, envsize, studentWorkload, bareMetal, serviceType)
   with open(labConfigCSV, "a", encoding='utf-8') as conffile:
     conffile.write(ln)
-  ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .7em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
+  ms="Lab <b>%s - %s</b> Has Been Created<ul style='color: black; font-size: .8em;'><li>Please copy this link: <b>%s?profile=%s</b></li><li>You should create a short URL for this link and provide it to your users.</li><li>Next step is to use <b>Deploy Lab Instances</b> below.</li></ul>" % (labCode, labName, ggurl, profile)
   msg=urllib.parse.quote(ms)
   redirectURL="%s?msg=%s%s" % (myurl, msg, imp)
   printheader(True, redirectURL, "0", "none")
@@ -643,6 +656,13 @@ elif operation == "print_lab":
           shared = ""
         else:
           shared = row['shared']
+        if 'environment' not in row:
+          environment = ""
+        else:
+          environment = row['environment']
+        if environment == "spp":
+          spp = True
+          myurl = "/gg/manager-spp.cgi"
         if 'infraworkload' not in row:
           infraWorkload = ""
         else:
@@ -679,7 +699,7 @@ elif operation == "print_lab":
           serviceType = ""
         else:
           serviceType = row['servicetype']
-        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], blueprint, shared, infraWorkload, region, city, salesforce, surveyLink, envsize, studentWorkload, bareMetal, serviceType)
+        printform('update_lab', row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], environment, blueprint, shared, infraWorkload, region, city, salesforce, surveyLink, envsize, studentWorkload, bareMetal, serviceType)
         printfooter()
         exit()
   printheader()
@@ -799,7 +819,7 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           out = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' % (row['code'], row['description'], row['activationkey'], row['bastion'], row['docurl'], row['urls'], row['catname'], row['catitem'], row['labuser'], row['labsshkey'], row['environment'], row['blueprint'], row['shared'], row['infraworkload'], row['region'], row['city'], row['salesforce'], row['surveylink'], row['envsize'], row['studentworkload'], row['baremetal'], row['servicetype'])
         newConfFile.write(out)
     newConfFile.close()
-    for x in reversed(range(1, 5)):
+    for x in reversed(range(1, 10)):
       lcb = labConfigCSV + "." + str(x)
       if os.path.exists(lcb):
         y = x + 1
@@ -1007,6 +1027,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         catName = row['catname']
         catItem = row['catitem']
         environment = row['environment']
+        if 'environment' in row and row['environment'] is not None and row['environment'] != "None" and environment == "spp":
+          spp = True
+          myurl = "/gg/manager-spp.cgi"
         if 'blueprint' in row and row['blueprint'] is not None and row['blueprint'] != "None":
           blueprint = row['blueprint']
         if 'infraworkload' in row and row['infraworkload'] is not None and row['infraworkload'] != "None":
@@ -1017,8 +1040,6 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           envsize = row['envsize']
         if 'region' in row and row['region'] is not None and row['region'] != "None":
           region = row['region']
-        if 'shared' in row and row['shared'] is not None and row['shared'] != "None":
-          shared = row['shared']
         if 'city' in row and row['city'] is not None and row['city'] != "None":
           city = row['city']
         if 'salesforce' in row and row['salesforce'] is not None and row['salesforce'] != "None":
@@ -1029,6 +1050,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           bareMetal = row['baremetal']
         if 'servicetype' in row and row['servicetype'] is not None and row['servicetype'] != "None":
           serviceType = row['servicetype']
+        if serviceType == "agnosticd-shared" or serviceType == "user-password":
+          if 'shared' in row and row['shared'] is not None and row['shared'] != "None":
+            shared = row['shared']
         break
   if catName == "" or catItem == "":
     printheader()
@@ -1205,9 +1229,16 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     #print (cmd)
     execute(cmd)
     print ("</pre><center>Retirement Queued.<br>" )
-    printback2()
-    print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=dellc&labcode=%s%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode, imp) )
+    if not spp:
+      printback2()
+      print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=dellc&labcode=%s%s'\" type=button>Delete Lab Configuration&nbsp;></button>" % (myurl, labCode, imp) )
     print ("</center>" )
+    assignedCSV = profileDir + "/assignedguids-" + labCode + ".csv"
+    if os.path.exists(assignedCSV):
+      os.remove(assignedCSV)
+    allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
+    if os.path.exists(allGuidsCSV):
+      os.remove(allGuidsCSV)
     printfooter()
     exit()
   else:
