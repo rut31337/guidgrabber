@@ -145,6 +145,7 @@ then
       KPS_BACKUP="${KPS_BACKUP}, \"${k}\" : \"${v}\""
     done
   fi
+  KPS_BACKUP="${KPS_BACKUP}, \"ha\" : \"secondary\""
   PAYLOAD_BACKUP="{ \"action\": \"order\", \"resource\": { \"href\": \"https://$uri/api/service_templates/$itemID\"${KPS_BACKUP} } }"
   #echo "PAYLOAD_BACKUP Is ${PAYLOAD_BACKUP}"
 fi
@@ -162,6 +163,10 @@ then
     fi
     KPS="${KPS}, \"${k}\" : \"${v}\""
   done
+  if [ -n "$regionBackup" ]
+  then
+    KPS="${KPS}, \"ha\" : \"primary\""
+  fi
 fi
 PAYLOAD="{ \"action\": \"order\", \"resource\": { \"href\": \"https://$uri/api/service_templates/$itemID\"${KPS} } }"
 #echo "PAYLOAD Is ${PAYLOAD}"

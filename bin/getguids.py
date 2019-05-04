@@ -20,6 +20,8 @@ parser.add_argument('--insecure', help='Use Insecure SSL Cert', action="store_fa
 parser.add_argument('--guidonly', help='Return Only The GUID', action="store_true")
 parser.add_argument('--shared', help='Number Of Shared Users (ONLY NON CF DEPLOYED!)', required=False, default=0)
 parser.add_argument('--labcode', help='Lab Code (Optional)', required=False, default="")
+parser.add_argument('--session', help='Session (Optional)', required=False, default="")
+parser.add_argument('--ha', help='HA (Optional)', required=False, default="", choices=['primary','secondary'])
 args = parser.parse_args()
 
 cfurl = args.cfurl
@@ -35,6 +37,8 @@ shared = args.shared
 sslVerify = args.insecure
 guidOnly = args.guidonly
 labCode = args.labcode
+ha = args.ha
+session = args.session
 
 def gettok():
   response = requests.get(cfurl + "/api/auth", auth=HTTPBasicAuth(cfuser, cfpass), verify=sslVerify)
@@ -96,6 +100,8 @@ if itName != "N/A" and itName != "None" and itName != "":
     guid = ""
     lc = ""
     status = ""
+    thissession = ""
+    thisha = ""
     for svc in services:
       for cab in svc['custom_attributes']:
         if cab['name'] == 'GUID':
@@ -104,9 +110,17 @@ if itName != "N/A" and itName != "None" and itName != "":
           lc = cab['value']
         if cab['name'] == 'service_status':
           status = cab['value']
+        if cab['name'] == 'session':
+          thissession = cab['value']
+        if cab['name'] == 'HA':
+          thisha = cab['value']
       if labCode:
         if guid != "" and lc == labCode and status == "complete":
-          print(guid)
+          if session != "":
+            if thissession == session and thisha == ha:
+              print(guid)
+          else:
+            print(guid)
           exit ()
       elif guid != "" and status == "complete":
         print(guid)
@@ -120,6 +134,8 @@ if itName != "N/A" and itName != "None" and itName != "":
     ln = ""
     sandboxZone = ""
     status = ""
+    thisha = ""
+    thissession = ""
     for cab in svc['custom_attributes']:
       if cab['name'] == 'GUID':
         guid = cab['value']
@@ -131,6 +147,10 @@ if itName != "N/A" and itName != "None" and itName != "":
         status = cab['value']
       elif cab['name'] == 'sandboxzone':
         sandboxZone = cab['value']
+      if cab['name'] == 'session':
+        thissession = cab['value']
+      if cab['name'] == 'HA':
+        thisha = cab['value']
     if status != "complete":
       continue
     if guid != "":
@@ -140,7 +160,11 @@ if itName != "N/A" and itName != "None" and itName != "":
           break
     if labCode != "":
       if labCode == lc:
-        ln=guid + "," + appID + "," + serviceType
+        if session != "":
+          if thissession == session and thisha == ha:
+            ln=guid + "," + appID + "," + serviceType
+        else:
+          ln=guid + "," + appID + "," + serviceType
     else:
       ln=guid + "," + appID + "," + serviceType
     if ln != "":

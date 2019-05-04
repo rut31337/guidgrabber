@@ -20,6 +20,7 @@ parser.add_argument('--insecure', help='Use Insecure SSL Cert', action="store_fa
 parser.add_argument('--labcode', help='Lab Code', required=True)
 parser.add_argument('--group', help='Group Count for Batch Deletions', type=int, default=10)
 parser.add_argument('--sleep', help='Sleep secs between groups', type=int, default=300)
+parser.add_argument('--ha', help='primary|secondary', default='primary', choices=['primary','secondary'])
 args = parser.parse_args()
 
 cfurl = args.cfurl
@@ -31,6 +32,7 @@ sslVerify = args.insecure
 labCode = args.labcode
 group = args.group
 sleept = args.sleep
+ha = args.ha
 
 def start(app,app_time,client):
         status = application_state(app)
@@ -106,7 +108,9 @@ for svc in services:
       ses = cab['value']
     elif cab['name'] == 'applicationid':
       appid = cab['value']
-  if ses == session and lc == labCode:
+    elif cab['name'] == 'HA':
+      thisha = cab['value']
+  if ses == session and lc == labCode and thisha == ha:
     #print(svc['name'])
     #print(svc['href'])
     appIDs.append(appid)
