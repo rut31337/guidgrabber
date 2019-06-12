@@ -11,7 +11,7 @@ usage() {
   echo "Error: Usage $0 -c <catalog name> -i <item name> -u <username> [ -g <groupCount> -p <groupWait> -f <optional-user-to-filter-to> -P <password> -w <uri> -l <labCode> -n -N ]"
 }
 
-while getopts Nnu:P:c:i:w:f:l:g:p: FLAG; do
+while getopts Nnu:P:c:i:w:f:l:g:p:s: FLAG; do
   case $FLAG in
     n) noni=1;;
     N) insecure=1;;
@@ -24,6 +24,7 @@ while getopts Nnu:P:c:i:w:f:l:g:p: FLAG; do
     l) labCode="$OPTARG";;
     g) groupCount="$OPTARG";;
     p) groupWait="$OPTARG";;
+    s) session="$OPTARG";;
     *) usage;exit;;
     esac
 done
@@ -119,6 +120,50 @@ c=0
 echo -n "Retiring Services"
 for svc in $svcs
 do
+  DELETED=false
+  OKD=false
+  if [ -n "$labCode" ]
+  then
+    cas=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$svc?attributes=custom_attributes&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'"| jq '.custom_attributes[]'| jq -r '"\(.name),\(.value)"'`
+    for ca in cas
+    do
+      k=`echo $ca|cut -f1 -d,`
+      if [ $k == "labCode" ]
+      then
+        v=`echo $ca|cut -f2 -d,`
+        if [ "$v" == $labCode ]
+        then
+          if [ -n "$session" ]
+          then
+            for ca2 in cas
+            do
+              k2=`echo $ca2|cut -f1 -d,`
+              if [ $k2 == "session" ]
+              then
+                v2=`echo $ca2|cut -f2 -d,`
+                if [ "$v2" == $session ]
+                then
+                  OKD=true
+                  break
+                fi
+              fi
+            done
+          else
+            OKD=true
+          fi
+          if [ $OKD == "true" ]
+          then
+            DELETED=true
+            output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
+          fi
+          break
+        fi
+      fi
+    done
+  else
+    DELETED=true
+    output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
+  fi
   if [ -n "$groupCount" ]
   then
     if [ $c -ge $groupCount ]
@@ -127,28 +172,17 @@ do
       echo -n "S"
       sleep $slp
     else
-      (( c = $c + 1 ))
+      if [ $DELETED == "true" ]
+      then
+        (( c = $c + 1 ))
+      fi
     fi
   fi
-  if [ -n "$labCode" ]
+  if [ $DELETED == "true" ]
   then
-    for ca in `curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$svc?attributes=custom_attributes&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'"| jq '.custom_attributes[]'| jq -r '"\(.name),\(.value)"'`
-    do
-      k=`echo $ca|cut -f1 -d,`
-      if [ $k == "labCode" ]
-      then
-        v=`echo $ca|cut -f2 -d,`
-        if [ "$v" == $labCode ]
-        then
-          output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
-          break
-        fi
-      fi
-    done
-  else
-    output=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X POST $svc -d "$PAYLOAD"`
+    echo -n "."
   fi
-  echo -n "."
   sleep 1
 done
 echo
+

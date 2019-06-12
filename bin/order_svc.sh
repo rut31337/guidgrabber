@@ -34,7 +34,7 @@ usage() {
   echo "Error: Usage $0 -c <catalog name> -i <item name> [ -u <username> -P <password> -t <totalRequests> -g <groupCount> -p <groupWait> -a <apiWait> -w <uri> -d <key1=value;key2=value> -n -N]"
 }
 
-while getopts Nnu:P:c:i:t:g:p:a:w:d: FLAG; do
+while getopts Nnu:P:c:i:t:g:p:a:w:d:b: FLAG; do
   case $FLAG in
     n) noni=1;;
     u) username="$OPTARG";;
@@ -48,6 +48,7 @@ while getopts Nnu:P:c:i:t:g:p:a:w:d: FLAG; do
     a) apiWait="$OPTARG";;
     w) uri="$OPTARG";;
     d) keypairs="$OPTARG";;
+    b) regionBackup="$OPTARG";;
     *) usage;exit;;
     esac
 done
@@ -84,7 +85,7 @@ err=$?
 tt=`echo $tok|grep error`
 if [ $err != 0 -o -n "$tt" ]
 then
-  echo "ERROR: Authentication failed to CloudForms."
+  echo "ERROR: Authentication failed to CloudForms $username."
   echo "$tok"
   exit $err
 fi
@@ -92,7 +93,7 @@ tok=`echo $tok|python -m json.tool|grep auth_token|cut -f4 -d\"`
 #echo "tok is '$tok'"
 if [ -z "$tok" ]
 then
-  echo "ERROR: Authentication failed to CloudForms."
+  echo "ERROR: Authentication failed to CloudForms $username."
   exit 1
 fi
 
@@ -126,6 +127,29 @@ then
   fi
 fi
 
+if [ -n "$regionBackup" ]
+then
+  KPS_BACKUP=""
+  if [ -n "$keypairs" ]
+  then
+    for kp in $keypairs
+    do
+      k=`echo $kp|cut -f1 -d=`
+      if [ $k == "region" ]
+      then
+        echo "Deploying to backup region $regionBackup"
+        v=$regionBackup
+      else
+        v=`echo $kp|cut -f2 -d=`
+      fi
+      KPS_BACKUP="${KPS_BACKUP}, \"${k}\" : \"${v}\""
+    done
+  fi
+  KPS_BACKUP="${KPS_BACKUP}, \"ha\" : \"secondary\""
+  PAYLOAD_BACKUP="{ \"action\": \"order\", \"resource\": { \"href\": \"https://$uri/api/service_templates/$itemID\"${KPS_BACKUP} } }"
+  #echo "PAYLOAD_BACKUP Is ${PAYLOAD_BACKUP}"
+fi
+
 KPS=""
 if [ -n "$keypairs" ]
 then
@@ -133,13 +157,21 @@ then
   do
     k=`echo $kp|cut -f1 -d=`
     v=`echo $kp|cut -f2 -d=`
+    if [ $k == "region" ]
+    then
+      echo "Deploying to primary region $v"
+    fi
     KPS="${KPS}, \"${k}\" : \"${v}\""
   done
+  if [ -n "$regionBackup" ]
+  then
+    KPS="${KPS}, \"ha\" : \"primary\""
+  fi
 fi
-
 PAYLOAD="{ \"action\": \"order\", \"resource\": { \"href\": \"https://$uri/api/service_templates/$itemID\"${KPS} } }"
-((slp=$groupWait * 60))
 #echo "PAYLOAD Is ${PAYLOAD}"
+
+((slp=$groupWait * 60))
 t=1
 g=1
 while [ $t -le $totalRequests ]
@@ -156,6 +188,19 @@ do
       echo "Deployment Failed!"
       echo $out | python -m json.tool
       exit 1
+    fi
+    if [ -n "$regionBackup" ]
+    then
+      echo "Deploying backup request $t in group $g"
+      #echo "$uri/api/service_catalogs/$catalogID/service_templates -d \"$PAYLOAD_BACKUP\""
+      out=`curl -s $ssl --user $username:$password -H "Content-Type: application/json" -X POST $uri/api/service_catalogs/$catalogID/service_templates -d "$PAYLOAD_BACKUP"`
+      testerr=`echo $out|grep '{"error":'`
+      if [ -n "$testerr" ]
+      then
+        echo "Backup Deployment Failed!"
+        echo $out | python -m json.tool
+        exit 1
+      fi
     fi
     (( c = $c + 1 ))
     (( t = $t + 1 ))
