@@ -117,7 +117,7 @@ if (/Edge/.test(navigator.userAgent)) {
     elif profile == "generic_sko":
       includehtml('topbar-sko.inc')
     else:
-      includehtml('topbar-old.inc')
+      includehtml('topbar.inc')
     includehtml('textarea-gg-showguid.inc')
   elif operation == "searchguid":
     includehtml('topbar-gg-redirect.inc')
@@ -127,14 +127,14 @@ if (/Edge/.test(navigator.userAgent)) {
     elif profile == "generic_sko":
       includehtml('topbar-sko.inc')
     else:
-      includehtml('topbar-old.inc')
+      includehtml('topbar.inc')
     includehtml('textarea-gg.inc')
 
 def printfooter(operation="requestguid"):
   if "summit" in profile or profile == "generic_tester":
-    includehtml('footer-gg-summit.inc')
+    includehtml('footer-gg.inc')
   else:
-    includehtml('footer-gg-old.inc')
+    includehtml('footer-gg.inc')
   print('</body>')
   print('</html>')
   exit()
@@ -297,11 +297,13 @@ elif operation == "searchguid":
     with open(assignedCSV, "a", encoding='utf-8') as ipfile:
       ipfile.write("guid,ipaddr,email\n")
   if 'ipaddr' not in form:
-    print("ERROR, no ipaddr provided.")
-    printback()
-    printfooter()
-    exit ()
-  ipaddr = form.getvalue('ipaddr')
+    #print("ERROR, no ipaddr provided.")
+    #printback()
+    #printfooter()
+    #exit ()
+    ipaddr = "unknown"
+  else:
+    ipaddr = form.getvalue('ipaddr')
   if 'email' not in form:
     print("ERROR, no E-mail provided.")
     printback()
@@ -455,6 +457,7 @@ elif operation == "showguid":
         labSSHkey = row['labsshkey']
         environment = row['environment']
         surveyLink = row['surveylink']
+        catalogItem = row['catitem']
         if 'servicetype' in row:
           if row['servicetype'] == "agnosticd-shared":
             shared = True
@@ -493,7 +496,11 @@ elif operation == "showguid":
   print("<center><table border=0>")
   print("<tr><td>")
   print(("<center><h2>Welcome to: %s</h2><table border=0>" % description))
-  print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (guidType,guid)))
+  if catalogItem == "Integreatly Workshop" and int(guid) <= 9:
+    g = "0" + guid
+  else:
+    g = guid
+  print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (guidType,g)))
   if shared:
     print(("<tr><td align=right>Your shared lab GUID is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
   if sharedUserPassword:
@@ -545,7 +552,11 @@ elif operation == "showguid":
         u = u.replace('DOMAIN', sandboxZone)
       if shared and sharedGUID != "":
         u = u.replace('REPL', sharedGUID)
-        u = u.replace('X', guid)
+        if catalogItem == "Integreatly Workshop" and int(guid) <= 9:
+          g = "0" + guid
+          u = u.replace('X', g)
+        else:
+          u = u.replace('X', guid)
       else:
         u = u.replace('REPL', guid)
       if u.startswith("*"):

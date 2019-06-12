@@ -89,7 +89,7 @@ c1.024,0,1.492-1.276,0.711-1.938L17.351,1.975c-0.779-0.661-1.922-0.661-2.701,0L0
             <!-- right side -->
             <div class="summit-header-red-hat">
                 <div class="summit-header-red-hat-logo">
-                    <!--<a class="summit-header-red-hat-logo-link" href="/en/home-page">--><img class="summit-header-red-hat-logo-image" src="/gg/images/logo-old.png"></a>
+                    <!--<a class="summit-header-red-hat-logo-link" href="/en/home-page">--><img class="summit-header-red-hat-logo-image" src="/gg/images/logo.png"></a>
                 </div>
             </div>
 

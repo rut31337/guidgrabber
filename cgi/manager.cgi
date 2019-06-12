@@ -13,6 +13,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import shutil
 from shutil import copyfile
+from subprocess import call
 
 def gettok(cfurl, cfuser, cfpass):
   response = requests.get(cfurl + "/api/auth", auth=HTTPBasicAuth(cfuser, cfpass))
@@ -106,12 +107,10 @@ def printheader(redirect=False, redirectURL="", waittime="0", operation="none"):
   print ('<html><head>' )
   includehtml('head-manager.inc')
   print ('</head>' )
-  if spp:
+  if summit:
     includehtml('topbar-summit.inc')
-  elif sko:
-    includehtml('topbar-sko.inc')
   else:
-    includehtml('topbar-old.inc')
+    includehtml('topbar.inc')
   includehtml('textarea-manager.inc')
   if impersonate:
     print ("<center>>>>><font color=red>Impersonating user %s</font><<<<</center>" % profile)
@@ -122,25 +121,27 @@ def printfooter(operation="none"):
     if impersonate:
       imph = "?impersonate=" + profile
     print ('<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + imph + '\'">Home</button></center>' )
-  if spp:
+  if summit:
     includehtml('footer-manager-summit.inc')
   else:
-    includehtml('footer-manager-old.inc')
+    includehtml('footer-manager.inc')
   print ('</body>' )
   print ('</html>' )
   exit()
 
-def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", infraWorkload="", region="", city="", salesforce="", surveyLink="", envsize="", studentWorkload="", bareMetal="", serviceType=""):
+def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", infraWorkload="", region="na", city="", salesforce="", surveyLink="", envsize="", studentWorkload="", bareMetal="", serviceType=""):
   config = configparser.ConfigParser()
   config.read(cfgfile)
-  cfuser = config.get('cloudforms-credentials', 'user')
-  cfpass = config.get('cloudforms-credentials', 'password')
   catalogs = {}
   if spp:
-    cfurl = "https://spp.opentlc.com"
-    cfgroup = "rhpds-access-spp"
+    cfurl = config.get('spp-credentials', 'url')
+    cfuser = config.get('spp-credentials', 'user')
+    cfpass = config.get('spp-credentials', 'password')
+    cfgroup = config.get('spp-credentials', 'group')
   else:
     cfurl = config.get('cloudforms-credentials', 'url')
+    cfuser = config.get('cloudforms-credentials', 'user')
+    cfpass = config.get('cloudforms-credentials', 'password')
     cfgroup = config.get('cloudforms-credentials', 'group')
   token = gettok(cfurl, cfuser, cfpass)
   url = cfurl + "/api/service_catalogs?expand=resources&attributes=name"
@@ -152,6 +153,7 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   catalogItems = {}
   for st in serviceTemplatesAll.get('resources'):
     stName = st['name']
+    #if stName != "Ansible F5 Automation Workshop" and stName != "Ansible Network Automation Workshop" and stName != "Ansible RH Enterprise Linux Automation":
     catID = st['service_template_catalog_id']
     catalogItems[stName] = catID
   for catID in catalogs.copy():
@@ -194,11 +196,9 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     function setItems(ddl1, ddl2, selectedItem) {
         ddl2.options.length = 0;
         var ddl2keys = catalogItems[ddl1.value];
-        createOptions(ddl2keys, ddl2, selectedItem)
+        createOptions(ddl2keys, ddl2, selectedItem);
     }
-</script>
-
-
+  </script>
 """)
   print ("""
 <style>
@@ -224,20 +224,18 @@ tr.brd{
   else:
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Name*:</b></td><td><input type='text' name='labname' size='80' value='%s'></td></tr>" %  labname )
   print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Lab Key*:</b></td><td><input type='text' name='labkey' size='20' value='%s'></td></tr></tbody>" % labkey )
-
-  if spp:
-    region = "na"
-  print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Region*:</b></td><td><select name='region'>")
+  print ("<tbody class=tbg>")
+  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Region*:</b></td><td><select name='region'>")
   na = ""
   apac = ""
   emea = ""
-  if region == "na":
-    na = "selected"
-  elif region == "apac":
+  if region == "apac":
     apac = "selected"
   elif region == "emea":
     emea = "selected"
-  print ("<option value='na' %s>NA</option>" % na )
+  elif region == "na":
+    na = "selected"
+  print ("<option value='na' %s>NA/LATAM</option>" % na )
   print ("<option value='emea' %s>EMEA</option>" % emea)
   print ("<option value='apac' %s>APAC</option>" % apac)
   print ("</select></td></tr>")
@@ -248,8 +246,7 @@ tr.brd{
     print ("<input type='radio' name='environment' value='rhpds' checked >RHPDS" )
   print ("</td></tr>" )
   print ("</tbody>")
-
-  print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Name*:</b></td><td><select id='catname' onchange=\"setItems(this, document.getElementById('catitems'), '%s')\" name='catname'>" % catitem)
+  print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Name*:</b></td><td><select id='catname' onchange=\"setItems(this, document.getElementById('catitems'), '%s');\" name='catname'>" % catitem)
   for catid,cat in catalogs.items():
     if catname == cat:
       selected = " selected"
@@ -257,7 +254,10 @@ tr.brd{
       selected = ""
     print ("<option value='%s' %s>%s</option>" % (cat, selected, cat) )
   print ("</select></td></tr>")
-  print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem'></select></td></tr></tbody>")
+  if spp:
+    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem'></select></td></tr></tbody>" )
+  else:
+    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem' onchange=\"setType(this.value);\"></select></td></tr></tbody>" )
   if spp:
     print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Service Type*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
     ravc = ""
@@ -272,14 +272,22 @@ tr.brd{
       upc = "checked='checked'"
     else:
       ravc = "checked='checked'"
+      serviceType = "ravello"
     print ("""
-<input type="radio" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
-<input type="radio" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
-<input type="radio" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
-<input type="radio" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
-</td></tr></tbody>
-""" % (ravc,agdc,agsc,upc))
-    print ("<tbody id='ravello' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
+<input type="radio" id="servicetype" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
+<input type="radio" id="servicetype" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
+<input type="radio" id="servicetype" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
+""" % (ravc,agdc,agsc))
+    print ("""
+&nbsp;|&nbsp;<input type="radio" id="servicetype" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
+""" % (upc))
+    print ("</td></tr>")
+    print("</tbody>")
+  else:
+    print ("<input type='hidden' id='servicetype' name='servicetype' value='%s'>" % (serviceType) )
+  print ("<tbody id='ravello' style='display:none;'>")
+  if spp:
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
     bmt = ""
     bmf = ""
     if bareMetal == "t":
@@ -287,14 +295,15 @@ tr.brd{
     else:
       bmf = "checked='checked'"
     print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Bare Metal (Nested Virt)*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
-    #print ("<td><input type='text' name='baremetal' size='80' value='%s'></td></tr></tbody>" %  bareMetal )
     print ("""
 <input type="radio" name="baremetal" %s value="t"/>&nbsp;True&nbsp;|&nbsp;
 <input type="radio" name="baremetal" %s value="f"/>&nbsp;False
 </td></tr>
 """ % (bmt,bmf))
-
-    print ("<tbody id='agnosticd' style='display:none;'><tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
+  print ("</tbody>")
+  print ("<tbody id='agnosticd' style='display:none;'>")
+  if spp:
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
     print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
     print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
     default = ""
@@ -305,9 +314,11 @@ tr.brd{
       default = "selected"
     print ("<option value='default' %s>Default</option>" % default)
     print ("<option value='small' %s>Small</option>" % small)
-    print ("</select></td></tr></tbody>")
-    print ("<tbody id='agnosticd-shared' style='display:none;'>")
-    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Shared User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr></tbody>" % shared  )
+    print ("</select></td></tr>")
+  print("</tbody>")
+  print ("<tbody id='agnosticd-shared' style='display:none;'>")
+  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Shared User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared  )
+  print("</tbody>")
   if spp:
     city = "boston"
     salesforce = "summit"
@@ -315,10 +326,9 @@ tr.brd{
     print ("<input type='hidden' name='salesforce' size='80' value='%s'>" % (salesforce) )
   else:
     print ("<tbody class=tbg>")
-    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Event City (lowercase/no spaces):</b></td><td><input type='text' name='city' size='80' value='%s'></td></tr>" % city )
-    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Salesforce Opportunity ID (If you have one):</b></td><td><input type='text' name='salesforce' size='80' value='%s'></td></tr>" % salesforce )
+    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Event City (lowercase/no spaces)*:</b></td><td><input type='text' name='city' size='80' value='%s'></td></tr>" % city )
+    print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Salesforce Opportunity ID (If you have one)*:</b></td><td><input type='text' name='salesforce' size='80' value='%s'></td></tr>" % salesforce )
     print ("</tbody>")
-
   print ("<tbody class=tbg>")
   print ("<tr><td align=center style='font-size: 0.6em;' colspan=2><b>NOTE:</b> For all fields specifying FQDN or URL you can use the string <b>REPL</b> which will be replaced by GUID (ex. bastion-REPL.rhpds.opentlc.com)</td></tr>" )
   print ("<tr><td colspan=2 align=center style='font-size: 0.6em;'>Enter <b>None</b> below if you don't want to print anything about SSH in your GUID page</td></tr>" )
@@ -341,6 +351,8 @@ tr.brd{
   print ('</center></form>' )
   print ("<script>")
   print ("window.onload = setItems(document.getElementById('catname'), document.getElementById('catitems'), '%s');" % catitem)
+  if not spp:
+    print ("window.onload = setType('%s');" % catitem)
   print ("</script>")
   if catname != "":
     print ("<script>")
@@ -356,27 +368,43 @@ tr.brd{
   else:
     print ("<script>document.getElementById('ravello').style.display='table-row-group';</script>")
   print ("""
-<script>
-function showRavello(){
-  document.getElementById('ravello').style.display ='table-row-group';
-  document.getElementById('agnosticd').style.display = 'none';
-  document.getElementById('agnosticd-shared').style.display = 'none';
-}
-function showAgnosticD(){
-  document.getElementById('ravello').style.display ='none';
-  document.getElementById('agnosticd').style.display = 'table-row-group';
-  document.getElementById('agnosticd-shared').style.display = 'none';
-}
-function showAgnosticDshared(){
-  document.getElementById('ravello').style.display ='none';
-  document.getElementById('agnosticd').style.display = 'table-row-group';
-  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
-}
-function showUserPassword(){
-  document.getElementById('ravello').style.display ='none';
-  document.getElementById('agnosticd').style.display = 'none';
-  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
-}
+	<script>
+	function showRavello(){
+	  document.getElementById('ravello').style.display ='table-row-group';
+	  document.getElementById('agnosticd').style.display = 'none';
+	  document.getElementById('agnosticd-shared').style.display = 'none';
+	}
+	function showAgnosticD(){
+	  document.getElementById('ravello').style.display ='none';
+	  document.getElementById('agnosticd').style.display = 'table-row-group';
+	  document.getElementById('agnosticd-shared').style.display = 'none';
+	}
+	function showAgnosticDshared(){
+	  document.getElementById('ravello').style.display ='none';
+	  document.getElementById('agnosticd').style.display = 'table-row-group';
+	  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
+	}
+	function showUserPassword(){
+	  document.getElementById('ravello').style.display ='none';
+	  document.getElementById('agnosticd').style.display = 'none';
+	  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
+	}
+	function setType(selectedItem){
+		if (
+		 	selectedItem === "Ansible F5 Automation Workshop" ||
+		 	selectedItem === "Ansible Network Automation Workshop" ||
+		 	selectedItem === "Ansible RH Enterprise Linux Automation" ||
+		 	selectedItem === "OpenShift Workshop" ||
+			selectedItem === "Integreatly Workshop" ||
+			selectedItem === "OpenShift on Azure"
+		) {
+	  		document.getElementById('agnosticd-shared').style.display = 'table-row-group';
+	  		document.getElementById('servicetype').setAttribute('value','agnosticd-shared');
+		} else {
+	  		document.getElementById('agnosticd-shared').style.display = 'none';
+	  		document.getElementById('servicetype').setAttribute('value','ravello');
+		}
+	}
 </script>
 """)
 
@@ -387,22 +415,24 @@ if not os.environ.get('REMOTE_USER'):
   exit()
 else:
   profile = os.environ.get('REMOTE_USER')
-if profile == "generic_tester" or profile == "generic_sko" or profile == "generic_summit":
+if profile == "generic_tester" or profile == "generic_sko" or profile == "generic_summit" or profile == "generic_pc":
   spp = True
-  myurl = "/gg/manager-spp.cgi"
 else:
   spp = False
-  myurl = "/gg/manager.cgi"
+myurl = "/gg/manager.cgi"
 
+tester = False
+summit = False
+event = False
 if profile == "generic_summit":
   summit = True
-else:
-  summit = False
-
+  event = True
 if profile == "generic_sko":
-  sko = True
-else:
-  sko = False
+  event = True
+if profile == "generic_pc":
+  event = True
+if profile == "generic_tester":
+  tester = True
 
 ggurl = "https://www.opentlc.com/gg/gg.cgi"
 ggroot = "/var/www/guidgrabber"
@@ -460,8 +490,9 @@ if operation == "none":
         found = True
         break
   if os.path.exists(labConfigCSV) and found:
-    print ("<tr><td style='font-size: .8em;'><a href=%s?operation=edit_lab%s>View/Edit Lab Configuration</a></td></tr>" % (myurl, imp) )
-    if not summit:
+    if not spp:
+      print ("<tr><td style='font-size: .8em;'><a href=%s?operation=edit_lab%s>View/Edit Lab Configuration</a></td></tr>" % (myurl, imp) )
+    if not event:
       print ("<tr><td style='font-size: .8em;'><a href=%s?operation=deploy_lab%s>Deploy Lab Instances</a></td></tr>" % (myurl, imp) )
       print ("<tr><td style='font-size: .8em;'><a href=%s?operation=update_guids%s>Update Available Lab GUIDs</a></td></tr>" % (myurl, imp) )
       print ("<tr><td style='font-size: .8em;'><a href=%s?operation=delete_instance%s>Delete Lab Instances</a></td></tr>" % (myurl, imp) )
@@ -526,14 +557,9 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
   if operation == 'update_guids':
     print ("<tr><td align=center style='font-size: 0.6em;'><b>Delete Assigned GUIDs:&nbsp;</b><input type='checkbox' name='delete_assigned'></td></tr>" )
   if operation == 'deploy_lab':
-    print ("<tr><td align=right style='font-size: 0.6em;'><b>Number of instances to deploy:&nbsp;</b></td>")
+    print ("<tr><td align=right style='font-size: 0.6em;'><b>Number of instances to deploy (ignored for shared environments):&nbsp;</b></td>")
     print ("<td><input type='text' name='num_instances' size='2'></td></tr>" )
-    if spp:
-      config = configparser.ConfigParser()
-      config.read(cfgfile)
-      sppPass = config.get('spp', 'password')
-      print ("<tr><td align=right style='font-size: 0.6em;'><td><input type='hidden' name='cfpass' value='%s'></td></tr>" % (sppPass))
-    else:
+    if not spp:
       print ("<tr><td align=right style='font-size: 0.6em;'><b>Password for user %s:</b></td><td><input type='password' name='cfpass' size='8'></td></tr>" % (profile) )
   print ('<tr><td colspan=2 align=center>' )
   printback2()
@@ -542,7 +568,7 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
   printfooter(operation)
   exit()
 elif operation == "create_lab" or operation == 'create_new_lab':
-  if 'labcode' not in form or 'labname' not in form or 'labkey' not in form or 'catname' not in form or 'catitem' not in form:
+  if 'labcode' not in form or 'labname' not in form or 'labkey' not in form or 'catname' not in form or 'catitem' not in form or 'city' not in form or 'salesforce' not in form:
     printheader()
     prerror("ERROR: Please fill out required fields.")
     printback()
@@ -662,7 +688,6 @@ elif operation == "print_lab":
           environment = row['environment']
         if environment == "spp":
           spp = True
-          myurl = "/gg/manager-spp.cgi"
         if 'infraworkload' not in row:
           infraWorkload = ""
         else:
@@ -808,8 +833,9 @@ elif operation == "view_lab" or operation == "del_lab" or operation == "update_l
           envsize = form.getvalue('envsize')
           region = form.getvalue('region')
           city = form.getvalue('city')
-          city = city.replace(" ", "")
-          city = city.lower()
+          if city:
+            city = city.replace(" ", "")
+            city = city.lower()
           salesforce = form.getvalue('salesforce')
           surveyLink = form.getvalue('surveylink')
           bareMetal = form.getvalue('baremetal')
@@ -1029,7 +1055,6 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         environment = row['environment']
         if 'environment' in row and row['environment'] is not None and row['environment'] != "None" and environment == "spp":
           spp = True
-          myurl = "/gg/manager-spp.cgi"
         if 'blueprint' in row and row['blueprint'] is not None and row['blueprint'] != "None":
           blueprint = row['blueprint']
         if 'infraworkload' in row and row['infraworkload'] is not None and row['infraworkload'] != "None":
@@ -1095,22 +1120,30 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     if os.path.exists(allGuidsCSV):
       os.remove(allGuidsCSV)
     if shared != "" and shared != "None":
-      print ("<center>Searching for GUID for lab code %s" % labCode )
+      print ("<center>Searching services for GUID matching lab code %s" % labCode )
       getguids = ggbin + "getguids.py"
       config = configparser.ConfigParser()
       config.read(cfgfile)
-      cfuser = config.get('cloudforms-credentials', 'user')
-      cfpass = config.get('cloudforms-credentials', 'password')
+      if spp:
+        cfuser = config.get('spp-credentials', 'user')
+        cfpass = config.get('spp-credentials', 'password')
+      else:
+        cfuser = config.get('cloudforms-credentials', 'user')
+        cfpass = config.get('cloudforms-credentials', 'password')
       if spp:
         command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly", "--labcode", labCode]
       else:
-        command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--labcode", labCode]
+        command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly"]
+        #command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--labcode", labCode]
+      #print (command)
       out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       stdout,stderr = out.communicate()
+      #print ("out %s" % stdout)
+      #print ("err %s" % stderr)
       if stdout != "" or stdout != "None":
         guid = stdout.rstrip().decode('ascii')
       if guid == "":
-        prerror("ERROR: Could not find a deployed service in %s." % envirURL)
+        prerror("ERROR: Could not find a deployed service in %s that is in a completed state." % envirURL)
         printback()
         printfooter()
         exit()
@@ -1132,8 +1165,12 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       getguids = ggbin + "getguids.py"
       config = configparser.ConfigParser()
       config.read(cfgfile)
-      cfuser = config.get('cloudforms-credentials', 'user')
-      cfpass = config.get('cloudforms-credentials', 'password')
+      if spp:
+        cfuser = config.get('spp-credentials', 'user')
+        cfpass = config.get('spp-credentials', 'password')
+      else:
+        cfuser = config.get('cloudforms-credentials', 'user')
+        cfpass = config.get('cloudforms-credentials', 'password')
       #print ("DEBUG: %s --cfurl %s --cfuser %s --cfpass %s --catalog %s --item %s --out %s --ufilter %s" % (getguids, envirURL, cfuser, cfpass, catName, catItem, allGuidsCSV, profile))
       if spp:
         execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode])
@@ -1154,20 +1191,29 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printfooter()
     exit()
   elif operation == "deploy_labs":
-    if 'num_instances' not in form:
-      printheader()
-      prerror("ERROR: No number of instances provided.")
-      printback()
-      printfooter()
-      exit()
-    num_instances = form.getvalue('num_instances')
-    if 'cfpass' not in form:
-      printheader()
-      prerror("ERROR: CloudForms password not provided.")
-      printback()
-      printfooter()
-      exit()
-    cfpass = form.getvalue('cfpass')
+    if serviceType != 'agnosticd-shared':
+      if 'num_instances' not in form:
+        printheader()
+        prerror("ERROR: No number of instances provided.")
+        printback()
+        printfooter()
+        exit()
+      else:
+        num_instances = form.getvalue('num_instances')
+    else:
+      num_instances = "1"
+    if not spp:
+      if 'cfpass' not in form:
+        printheader()
+        prerror("ERROR: CloudForms password not provided.")
+        printback()
+        printfooter()
+        exit()
+      cfpass = form.getvalue('cfpass')
+    else:
+      config = configparser.ConfigParser()
+      config.read(cfgfile)
+      cfpass = config.get('spp-credentials', 'shared-password')
     if not re.match("^[0-9]+$", num_instances):
       printheader()
       prerror("ERROR: Number of instances must be a valid number <= 55.")
@@ -1198,15 +1244,24 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           settings = "%s;student_workloads=%s" % (settings, studentWorkload)
         if envsize != "":
           settings = "%s;envsize=%s" % (settings, envsize)
-        settings = settings + ";users=1"
-      if serviceType == "agnosticd-shared":
-        if shared != "":
-          settings = "%s;users=%s" % (settings, shared)
-    if region != "":
-      if serviceType == "agnosticd-shared":
-        settings = "%s;region=%s_shared" % (settings, region)
-      else:
-        settings = "%s;region=%s" % (settings, region)
+    if region == "" or region == "None":
+      region = "na"
+    if spp and serviceType == "agnosticd-shared":
+      settings = "%s;region=%s_shared" % (settings, region)
+    if not spp:
+      if catItem == "OpenShift Workshop" or catItem == "Integreatly Workshop":
+        settings = "%s;region=%s_openshiftbu" % (settings, region)
+      if catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation":
+        settings = "%s;region=%s_ansiblebu" % (settings, region)
+      if catItem == "OpenShift on Azure":
+        settings = "%s;region=azure_eastus" % (settings)
+    else:
+      settings = "%s;region=%s" % (settings, region)
+    if serviceType == "agnosticd-shared":
+      if shared != "":
+        settings = "%s;users=%s" % (settings, shared)
+    else:
+      settings = settings + ";users=1"
     #print ( "DEBUG: %s" % (settings))
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings])
     print ("</pre><center>" )
@@ -1219,8 +1274,12 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     retiresvc = ggbin + "retire_svcs.sh"
     config = configparser.ConfigParser()
     config.read(cfgfile)
-    cfuser = config.get('cloudforms-credentials', 'user')
-    cfpass = config.get('cloudforms-credentials', 'password')
+    if spp:
+      cfuser = config.get('spp-credentials', 'user')
+      cfpass = config.get('spp-credentials', 'password')
+    else:
+      cfuser = config.get('cloudforms-credentials', 'user')
+      cfpass = config.get('cloudforms-credentials', 'password')
     if spp:
       cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-l", labCode, "-n"]
     else:

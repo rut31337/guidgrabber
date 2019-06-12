@@ -58,7 +58,7 @@ c1.024,0,1.492-1.276,0.711-1.938L17.351,1.975c-0.779-0.661-1.922-0.661-2.701,0L0
                           <div class="summit-link-tile">
                               <!--<a class="summit-link-tile-link" href="/en/summit/2018"></a>-->
                               <div class="summit-image-embed">
-<img src="/gg/images/rhpds.png"  width="300" height="60">&nbsp;<div class="summit-band-header-title">Sales Kickoff</div>
+<img src="/gg/images/rhpds.png"  width="300" height="60">
 
                                   <!--<a href="/en/summit/2018">-->
 <!--

@@ -8,7 +8,7 @@
                   <div class="summit-image-embed">
                       <div class="summit-image-embed-container">
                               
-        <div class="media media-element-container media-default"><img class="media-element file-default summit-image-embed-img" alt="Red Hat Shadowman logo" title="redhat.com" src="/gg/images/shadowman-logo-old.png" width="138" height="44"></div>
+        <div class="media media-element-container media-default"><img class="media-element file-default summit-image-embed-img" alt="Red Hat Shadowman logo" title="redhat.com" src="/gg/images/shadowman-logo.png" width="138" height="44"></div>
                           </a>
                       </div>
                   </div>
@@ -17,7 +17,7 @@
                           <!-- Footnote Component -->
                           <div class="summit-footnote" data-summit-theme="dark">
                               <ul class="summit-footnote-container">
-                                  <!-- <li class="summit-footnote-item">Copyright ©2019 Red Hat, Inc.</li> -->
+                                  <li class="summit-footnote-item"><div id="link_bar"><a href="https://mojo.redhat.com/docs/DOC-1172529" target=_blank>Documentation</a></div></li>
                               </ul>
                           </div>
                           <!-- Footnote Component -->

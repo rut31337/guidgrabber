@@ -1,6 +1,6 @@
 
 <link type="text/css" rel="stylesheet" href="/gg/gg.css" media="all">
-<link rel="shortcut icon" href="/gg/favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="/gg/favicon-new.ico" type="image/x-icon">
 <title>Searching for GUID</title>
 <noscript>
     <div style="position: fixed; top: 0px; left: 0px; z-index: 3000;
