@@ -132,7 +132,7 @@ cfpass = config.get('cloudforms-credentials', 'password')
 if not re.match("^[0-9]+$", num_instances):
   prerror("ERROR: Number of instances must be a valid number.")
   exit()
-if int(num_instances) < 1 or int(num_instances) > 55:
+if int(num_instances) < 1 or int(num_instances) > 60:
   prerror("ERROR: Number of instances must be a positive number.")
   exit()
 print ("Attempting to deploy %s instances of %s/%s in environment %s." % (num_instances, catName, catItem, environment) )
@@ -158,13 +158,24 @@ if spp:
   if serviceType == "agnosticd-shared":
     if shared != "":
       settings = '%s;users=%s' % (settings, shared)
+if bareMetal == "t":
+  print ("Bare Metal Enabled")
 if region != "":
   if serviceType == "ravello":
-    region = "na_east"
-    regionBackup = "eu_west"
-    if bareMetal == "t":
-      region = "na_west"
-      regionBackup = "na_east"
+    if region == "na":
+      if bareMetal == "t":
+        region = "na_baremetal"
+        #regionBackup = "na_east"
+      else:
+        region = "na_vm"
+        #regionBackup = "eu_west"
+    elif region == "emea":
+      if bareMetal == "t":
+        region = "emea_baremetal"
+        #regionBackup = "eu_central"
+      else:
+        region = "emea_vm"
+        #regionBackup = "eu_west"
   if serviceType == "agnosticd-shared":
     settings = '%s;region=%s_shared' % (settings, region)
   else:
