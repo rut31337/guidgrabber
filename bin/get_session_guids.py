@@ -13,7 +13,7 @@ def mkparser():
   parser.add_argument("--labcode", dest="labCode",default=None,help='Lab Code <lab code>',required=True)
   parser.add_argument("--profile", dest="profile",default=None,help='Profile <profile>',required=True)
   parser.add_argument("--session", dest="session",default=None,help='Session <session>')
-  parser.add_argument("--ha", dest="ha",default='none',help='HA',choices=['primary','secondary','none'])
+  parser.add_argument("--ha", dest="ha",default=None,help='HA',choices=['primary','secondary'])
   return parser
 
 def execute(command, quiet=False):

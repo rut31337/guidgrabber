@@ -21,7 +21,7 @@ parser.add_argument('--guidonly', help='Return Only The GUID', action="store_tru
 parser.add_argument('--shared', help='Number Of Shared Users (ONLY NON CF DEPLOYED!)', required=False, default=0)
 parser.add_argument('--labcode', help='Lab Code (Optional)', required=False, default="")
 parser.add_argument('--session', help='Session (Optional)', required=False, default="")
-parser.add_argument('--ha', help='HA (Optional)', required=False, default="none", choices=['none','primary','secondary'])
+parser.add_argument('--ha', help='HA (Optional)', required=False, default=None, choices=['primary','secondary'])
 args = parser.parse_args()
 
 cfurl = args.cfurl
@@ -118,7 +118,7 @@ if itName != "N/A" and itName != "None" and itName != "":
       if labCode:
         if guid != "" and lc == labCode and status == "complete":
           if session != "":
-            if ha != 'none':
+            if ha is not None:
               if thissession == session and thisha == ha:
                 print(guid)
             else:
@@ -157,7 +157,7 @@ if itName != "N/A" and itName != "None" and itName != "":
       if cab['name'] == 'HA':
         thisha = cab['value']
     if status != "complete":
-      print ("skipping")
+      #print ("skipping")
       continue
     if guid != "":
       for tag in svc['tags']:
@@ -172,7 +172,7 @@ if itName != "N/A" and itName != "None" and itName != "":
       if labCode == lc:
         #print("found" + guid)
         if session != "":
-          if ha != 'none':
+          if ha is not None:
             #print("hacheck " + thissession + " " + session + " " + thisha + " " + ha)
             if thissession == session and thisha == ha:
               #print("writing " + thissession + " " + session + " " + thisha + " " + ha)
@@ -190,12 +190,13 @@ if itName != "N/A" and itName != "None" and itName != "":
         ln = ln + "," + sandboxZone
       ln = ln + "\n"
       f.write(ln)
+  #print ("Wrote file " + outFile)
 else:
   i = 1
   shr = int(shared)
   while i <= shr:
     user = str(i)
-    ln = '"%s","%s","%s"\n' % (user, "", "shared")
+    ln = '"%s","%s","%s"\n' % (user, "", "agnosticd-shared")
     i = i + 1
     f.write(ln)
 
