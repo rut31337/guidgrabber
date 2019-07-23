@@ -21,7 +21,7 @@ parser.add_argument('--guidonly', help='Return Only The GUID', action="store_tru
 parser.add_argument('--shared', help='Number Of Shared Users (ONLY NON CF DEPLOYED!)', required=False, default=0)
 parser.add_argument('--labcode', help='Lab Code (Optional)', required=False, default="")
 parser.add_argument('--session', help='Session (Optional)', required=False, default="")
-parser.add_argument('--ha', help='HA (Optional)', required=False, default="", choices=['primary','secondary'])
+parser.add_argument('--ha', help='HA (Optional)', required=False, default="none", choices=['none','primary','secondary'])
 args = parser.parse_args()
 
 cfurl = args.cfurl
@@ -51,6 +51,7 @@ def apicall(token, url, op, inp = None ):
   head = {'Content-Type': 'application/json', 'X-Auth-Token': token, 'accept': 'application/json;version=2'}
   if op == "get":
     response = requests.get(cfurl + url, headers=head, verify=sslVerify)
+    #print(response['resources']['count'])
   #print("RESPONSE: " + response.text)
   obj = response.json()
   return obj.get('resources')
@@ -64,11 +65,11 @@ if itName != "N/A" and itName != "None" and itName != "":
   url = "/api/service_catalogs?attributes=name,id&expand=resources&filter%5B%5D=name='" + catalogName + "'"
   cats = apicall(token, url, "get", inp = None )
   if not cats:
-    print(("ERROR: No such catalog " + catName))
+    print("ERROR: No such catalog " + catName)
     exit ()
   else:
     catalogID = str(cats[0]['id'])
-    #print "Catalog ID: " + catalogID
+    #print("Catalog ID: " + catalogID)
 
   url = "/api/service_templates?attributes=service_template_catalog_id,id,name&expand=resources&filter%5B%5D=name='" + itemName + "'&filter%5B%5D=service_template_catalog_id='" + catalogID + "'"
   items = apicall(token, url, "get", inp = None )
@@ -78,9 +79,9 @@ if itName != "N/A" and itName != "None" and itName != "":
     exit ()
   else:
     itemID = str(items[0]['id'])
-    #print "Item ID: " + itemID
+    #print("Item ID: " + itemID)
 
-  surl = "/api/services?attributes=tags%2Ccustom_attributes&expand=resources&filter%5B%5D=service_template_id='" + itemID + "'"
+  surl = "/api/services?attributes=tags%2Ccustom_attributes&expand=resources&limit=3000&filter%5B%5D=service_template_id='" + itemID + "'"
 
   if userFilter != "":
     url = "/api/users?expand=resources&filter%5B%5D=userid='" + userFilter + "'"
@@ -117,11 +118,15 @@ if itName != "N/A" and itName != "None" and itName != "":
       if labCode:
         if guid != "" and lc == labCode and status == "complete":
           if session != "":
-            if thissession == session and thisha == ha:
-              print(guid)
+            if ha != 'none':
+              if thissession == session and thisha == ha:
+                print(guid)
+            else:
+              if thissession == session:
+                print(guid)
           else:
             print(guid)
-          exit ()
+          #exit ()
       elif guid != "" and status == "complete":
         print(guid)
         exit ()
@@ -152,6 +157,7 @@ if itName != "N/A" and itName != "None" and itName != "":
       if cab['name'] == 'HA':
         thisha = cab['value']
     if status != "complete":
+      print ("skipping")
       continue
     if guid != "":
       for tag in svc['tags']:
@@ -160,11 +166,21 @@ if itName != "N/A" and itName != "None" and itName != "":
           if serviceType == "ansible_deployer":
             serviceType = "agnosticd"
           break
-    if labCode != "":
+    if labCode:
+      #if labCode != lc:
+      #  print("guid not found " + guid + " " + lc + " " + labCode)
       if labCode == lc:
+        #print("found" + guid)
         if session != "":
-          if thissession == session and thisha == ha:
-            ln=guid + "," + appID + "," + serviceType
+          if ha != 'none':
+            #print("hacheck " + thissession + " " + session + " " + thisha + " " + ha)
+            if thissession == session and thisha == ha:
+              #print("writing " + thissession + " " + session + " " + thisha + " " + ha)
+              ln=guid + "," + appID + "," + serviceType
+          else:
+            #print("reglcheck" + thissession + " " + session )
+            if thissession == session:
+              ln=guid + "," + appID + "," + serviceType
         else:
           ln=guid + "," + appID + "," + serviceType
     else:

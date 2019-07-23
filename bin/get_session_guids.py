@@ -13,7 +13,7 @@ def mkparser():
   parser.add_argument("--labcode", dest="labCode",default=None,help='Lab Code <lab code>',required=True)
   parser.add_argument("--profile", dest="profile",default=None,help='Profile <profile>',required=True)
   parser.add_argument("--session", dest="session",default=None,help='Session <session>')
-  parser.add_argument("--ha", dest="ha",default="",help='HA',choices=['primary','secondary'])
+  parser.add_argument("--ha", dest="ha",default='none',help='HA',choices=['primary','secondary','none'])
   return parser
 
 def execute(command, quiet=False):
@@ -147,6 +147,7 @@ if shared != "" and shared != "None":
     command.extend(["--session", session])
   if ha is not None:
     command.extend(["--ha" , ha])
+  #print(command)
   out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   stdout,stderr = out.communicate()
   if stdout != "" or stdout != "None":
@@ -154,7 +155,7 @@ if shared != "" and shared != "None":
   if guid == "":
     print("ERROR: Could not find a deployed service in %s." % envirURL)
     exit()
-  print ("<center>Creating %s shared users..." % shared )
+  print ("Creating %s shared users..." % shared )
   with open(allGuidsCSV, "w", encoding='utf-8') as agc:
     ln = '"guid","appid","servicetype"\n'
     agc.write(ln)
