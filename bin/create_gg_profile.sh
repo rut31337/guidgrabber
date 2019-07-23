@@ -4,7 +4,7 @@ usage() {
   echo "Usage: $0 -p <profile> -l <lab code> -d <description> -a <activation key> -c <catalog name> -i <catalog item> -g <GUID> [ -b <bastion> -D <doc url> -u <urls> -U <lab user> -s <ssh key> -e <environment> -B <blueprint> -x <shared user count> -w <infra workload> -r <region> -C <city> -f <sales force ID> -S <survey link> -E <env size> -W <student workload> -m <bare metal> -t <service type>]"
   echo
   echo "To also create available GUIDs add -I where -g <guid> is required with optional -y <sandbox domain>"
-  echo "If -t is set to agnosticd_shared you must set -x to an integer that equals the number of shared users to generate."
+  echo "If -t is set to agnosticd-shared you must set -x to an integer that equals the number of shared users to generate."
 }
 
 while getopts Ip:l:d:a:c:i:b:D:u:U:s:e:B:x:C:w:r:C:f:S:E:W:m:t:g:y: FLAG; do
@@ -57,20 +57,20 @@ fi
 
 if [ $createAvailable ]
 then
-  if [ "$serviceType" != "agnosticd_shared" ]
+  if [ "$serviceType" != "agnosticd-shared" ]
   then
-    echo "ERROR: Create available flag set but service type is not agnosticd_shared.  This is an unsupported configuration at this time."
+    echo "ERROR: Create available flag set but service type is not agnosticd-shared.  This is an unsupported configuration at this time."
     echo
     usage
     exit 1
   fi
 fi
 
-if [ "$serviceType" == "agnosticd_shared" ]
+if [ "$serviceType" == "agnosticd-shared" ]
 then
   if [ -z "$sharedUsers" ]
   then
-    echo "ERROR: Service Type is agnosticd_shared but -x does not specify the number of shared users."
+    echo "ERROR: Service Type is agnosticd-shared but -x does not specify the number of shared users."
     echo
     usage
     exit 1
@@ -105,7 +105,7 @@ echo "\"$labCode\",\"$description\",\"$actKey\",\"$bastion\",\"$docURL\",\"$URLS
 if [ "$createAvailable" ]
 then
   availableFile="${profileDir}/availableguids-${labCode}.csv"
-  if [ "$serviceType" == "agnosticd_shared" ]
+  if [ "$serviceType" == "agnosticd-shared" ]
   then
     echo "guid,appid,servicetype,sandboxzone" > $availableFile
     x=1
@@ -118,4 +118,4 @@ then
 fi
 
 chown -R apache:apache $profileDir
-restorecon -R $profileDir
+/sbin/restorecon -R $profileDir

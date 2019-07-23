@@ -14,6 +14,7 @@ from requests.auth import HTTPBasicAuth
 import shutil
 from shutil import copyfile
 from subprocess import call
+from collections import OrderedDict
 
 def gettok(cfurl, cfuser, cfpass):
   response = requests.get(cfurl + "/api/auth", auth=HTTPBasicAuth(cfuser, cfpass))
@@ -144,22 +145,26 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     cfpass = config.get('cloudforms-credentials', 'password')
     cfgroup = config.get('cloudforms-credentials', 'group')
   token = gettok(cfurl, cfuser, cfpass)
-  url = cfurl + "/api/service_catalogs?expand=resources&attributes=name"
+  url = cfurl + "/api/service_catalogs?expand=resources&attributes=name&limit=10000"
   serviceCatalogsAll = apicall(token, url, "get", cfgroup)
   for sc in serviceCatalogsAll.get('resources'):
     catalogs[sc['id']] = sc['name']
-  url = cfurl + "/api/service_templates?attributes=name,service_template_catalog_id&expand=resources"
+  url = cfurl + "/api/service_templates?attributes=name,service_template_catalog_id&expand=resources&limit=10000"
   serviceTemplatesAll = apicall(token, url, "get", cfgroup)
   catalogItems = {}
   for st in serviceTemplatesAll.get('resources'):
     stName = st['name']
+    stID = st['id']
     #if stName != "Ansible F5 Automation Workshop" and stName != "Ansible Network Automation Workshop" and stName != "Ansible RH Enterprise Linux Automation":
     catID = st['service_template_catalog_id']
-    catalogItems[stName] = catID
+    catalogItems[stID] = {}
+    catalogItems[stID]['catid'] = catID
+    catalogItems[stID]['name'] = stName
   for catID in catalogs.copy():
     catEmpty = True
-    for stName, stCatID in catalogItems.items():
-      if stCatID == catID:
+    for ci, st in catalogItems.items():
+      #for stName, stCatID in stcatalogItems.items():
+      if st['catid'] == catID:
         catEmpty = False
     if catEmpty:
       catalogs.pop(catID)
@@ -167,9 +172,12 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
   print (" var catalogItems = {")
   for catID, catName in sorted(catalogs.items(), key=lambda x: x[1], reverse=False):
     print ("'%s': [" % catName)
-    for stName, stCatID in sorted(catalogItems.items()):
-      if stCatID == catID:
-        print ("'%s'," % stName )
+    for ci, st in catalogItems.items():
+    #for stName, stCatID in sorted(catalogItems.items()):
+      #if stCatID == catID:
+      if st['catid'] == catID:
+        #print ("'%s'," % stName )
+        print ("'%s'," % st['name'] )
     print ( "]," )
   print ("}")
   print ("</script>")
@@ -258,33 +266,30 @@ tr.brd{
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem'></select></td></tr></tbody>" )
   else:
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem' onchange=\"setType(this.value);\"></select></td></tr></tbody>" )
-  if spp:
-    print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Service Type*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
-    ravc = ""
-    agdc = ""
-    agsc = ""
-    upc = ""
-    if serviceType == 'agnosticd':
-      agdc = "checked='checked'"
-    elif serviceType == 'agnosticd-shared':
-      agsc = "checked='checked'"
-    elif serviceType == 'user-password':
-      upc = "checked='checked'"
-    else:
-      ravc = "checked='checked'"
-      serviceType = "ravello"
-    print ("""
+  print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Service Type*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
+  ravc = ""
+  agdc = ""
+  agsc = ""
+  upc = ""
+  if serviceType == 'agnosticd':
+    agdc = "checked='checked'"
+  elif serviceType == 'agnosticd-shared':
+    agsc = "checked='checked'"
+  elif serviceType == 'user-password':
+    upc = "checked='checked'"
+  else:
+    ravc = "checked='checked'"
+    serviceType = "ravello"
+  print ("""
 <input type="radio" id="servicetype" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
 <input type="radio" id="servicetype" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
 <input type="radio" id="servicetype" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
 """ % (ravc,agdc,agsc))
-    print ("""
+  print ("""
 &nbsp;|&nbsp;<input type="radio" id="servicetype" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
 """ % (upc))
-    print ("</td></tr>")
-    print("</tbody>")
-  else:
-    print ("<input type='hidden' id='servicetype' name='servicetype' value='%s'>" % (serviceType) )
+  print ("</td></tr>")
+  print("</tbody>")
   print ("<tbody id='ravello' style='display:none;'>")
   if spp:
     print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Blueprint*:</b></td><td><input type='text' name='blueprint' size='80' value='%s'></td></tr>" %  blueprint )
@@ -302,26 +307,25 @@ tr.brd{
 """ % (bmt,bmf))
   print ("</tbody>")
   print ("<tbody id='agnosticd' style='display:none;'>")
-  if spp:
-    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
-    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
-    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
-    default = ""
-    small = ""
-    if envsize == "small":
-      small = "selected"
-    else:
-      default = "selected"
-    print ("<option value='default' %s>Default</option>" % default)
-    print ("<option value='small' %s>Small</option>" % small)
-    print ("</select></td></tr>")
+  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
+  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
+  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
+  default = ""
+  small = ""
+  if envsize == "small":
+    small = "selected"
+  else:
+    default = "selected"
+  print ("<option value='default' %s>Default</option>" % default)
+  print ("<option value='small' %s>Small</option>" % small)
+  print ("</select></td></tr>")
   print("</tbody>")
   print ("<tbody id='agnosticd-shared' style='display:none;'>")
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Shared User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared  )
+  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared  )
   print("</tbody>")
   if spp:
-    city = "boston"
-    salesforce = "summit"
+    #city = "boston"
+    #salesforce = "summit"
     print ("<input type='hidden' name='city' size='80' value='%s'>" % (city) )
     print ("<input type='hidden' name='salesforce' size='80' value='%s'>" % (salesforce) )
   else:
@@ -391,10 +395,13 @@ tr.brd{
 	}
 	function setType(selectedItem){
 		if (
+		 	selectedItem === "OCP & Ansible Better Together Dev Track" ||
+		 	selectedItem === "Implementing Proactive Security OCP" ||
 		 	selectedItem === "Ansible F5 Automation Workshop" ||
 		 	selectedItem === "Ansible Network Automation Workshop" ||
 		 	selectedItem === "Ansible RH Enterprise Linux Automation" ||
 		 	selectedItem === "OpenShift Workshop" ||
+		 	selectedItem === "OpenShift 4 Workshop" ||
 			selectedItem === "Integreatly Workshop" ||
 			selectedItem === "OpenShift on Azure"
 		) {
@@ -415,7 +422,7 @@ if not os.environ.get('REMOTE_USER'):
   exit()
 else:
   profile = os.environ.get('REMOTE_USER')
-if profile == "generic_tester" or profile == "generic_sko" or profile == "generic_summit" or profile == "generic_pc":
+if profile == "generic_tester" or profile == "generic_sko" or profile == "generic_summit" or profile == "generic_pc" or profile == "generic_rhte":
   spp = True
 else:
   spp = False
@@ -430,6 +437,8 @@ if profile == "generic_summit":
 if profile == "generic_sko":
   event = True
 if profile == "generic_pc":
+  event = True
+if profile == "generic_rhte":
   event = True
 if profile == "generic_tester":
   tester = True
@@ -1149,7 +1158,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         exit()
       print ("<center>Creating %s shared users..." % shared )
       with open(allGuidsCSV, "w", encoding='utf-8') as agc:
-        ln = '"guid","appid","servicetype"\n'
+        ln = '"guid","appid","servicetype","sandboxzone"\n'
         agc.write(ln)
         i = 1
         shr = int(shared)
@@ -1249,11 +1258,13 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     if spp and serviceType == "agnosticd-shared":
       settings = "%s;region=%s_shared" % (settings, region)
     if not spp:
-      if catItem == "OpenShift Workshop" or catItem == "Integreatly Workshop":
+      if catItem == "Implementing Proactive Security OCP":
+        settings = "%s;region=%s_gpte" % (settings, region)
+      elif catItem == "OpenShift Workshop" or catItem == "Integreatly Workshop" or catItem == "OpenShift 4 Workshop" or catItem == "OCP & Ansible Better Together Dev Track":
         settings = "%s;region=%s_openshiftbu" % (settings, region)
-      if catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation":
+      elif catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation":
         settings = "%s;region=%s_ansiblebu" % (settings, region)
-      if catItem == "OpenShift on Azure":
+      elif catItem == "OpenShift on Azure":
         settings = "%s;region=azure_eastus" % (settings)
     else:
       settings = "%s;region=%s" % (settings, region)

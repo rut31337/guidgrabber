@@ -42,12 +42,19 @@ parser = mkparser()
 args = parser.parse_args()
 
 labCode = args.labCode
+profile = args.profile
+
 if args.session:
   session = args.session
-profile = args.profile
-ha = args.ha
+else:
+  session = None
 
-ggroot = "/root/guidgrabber"
+if args.ha:
+  ha = args.ha
+else:
+  ha = None
+
+ggroot = "/var/www/guidgrabber"
 ggetc = ggroot + "/etc/"
 ggbin = ggroot + "/bin/"
 cfgfile = ggetc + "gg.cfg"
@@ -135,7 +142,11 @@ cfpass = config.get('cloudforms-credentials', 'password')
 print ("Searching for GUIDs for lab code %s" % labCode )
 getguids = ggbin + "getguids.py"
 if shared != "" and shared != "None":
-  command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly", "--labcode", labCode, "--session", session, "--ha" , ha]
+  command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly", "--labcode", labCode]
+  if session is not None:
+    command.extend(["--session", session])
+  if ha is not None:
+    command.extend(["--ha" , ha])
   out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   stdout,stderr = out.communicate()
   if stdout != "" or stdout != "None":
@@ -155,4 +166,10 @@ if shared != "" and shared != "None":
       i = i + 1
       agc.write(ln)
 else:
-  execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode, "--session", session, "--ha" , ha])
+  command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode]
+  #print (command)
+  if session is not None:
+    command.extend(["--session", session])
+  if ha is not None:
+    command.extend(["--ha" , ha])
+  execute(command)

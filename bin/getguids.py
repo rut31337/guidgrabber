@@ -157,6 +157,8 @@ if itName != "N/A" and itName != "None" and itName != "":
       for tag in svc['tags']:
         if re.match(r'^\/managed\/servicetype', tag['name']):
           serviceType = re.split('/', tag['name'])[3]
+          if serviceType == "ansible_deployer":
+            serviceType = "agnosticd"
           break
     if labCode != "":
       if labCode == lc:
