@@ -174,3 +174,5 @@ else:
   if ha is not None:
     command.extend(["--ha" , ha])
   execute(command)
+execute(["chown", "apache:apache", allGuidsCSV])
+execute(["/sbin/restorecon", allGuidsCSV])

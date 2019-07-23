@@ -307,18 +307,19 @@ tr.brd{
 """ % (bmt,bmf))
   print ("</tbody>")
   print ("<tbody id='agnosticd' style='display:none;'>")
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
-  print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
-  default = ""
-  small = ""
-  if envsize == "small":
-    small = "selected"
-  else:
-    default = "selected"
-  print ("<option value='default' %s>Default</option>" % default)
-  print ("<option value='small' %s>Small</option>" % small)
-  print ("</select></td></tr>")
+  if spp:
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Infra Workload*:</b></td><td><input type='text' name='infraworkload' size='80' value='%s'></td></tr>" %  infraWorkload )
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Student Workload*:</b></td><td><input type='text' name='studentworkload' size='80' value='%s'></td></tr>" %  studentWorkload )
+    print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>Size*</b></td><td><select name='envsize'>")
+    default = ""
+    small = ""
+    if envsize == "small":
+      small = "selected"
+    else:
+      default = "selected"
+    print ("<option value='default' %s>Default</option>" % default)
+    print ("<option value='small' %s>Small</option>" % small)
+    print ("</select></td></tr>")
   print("</tbody>")
   print ("<tbody id='agnosticd-shared' style='display:none;'>")
   print ("<tr class=brd><td align=right style='width:40%%; font-size: 0.6em;'><b>User Count*:</b></td><td><input type='text' name='shared' size='80' value='%s'></td></tr>" % shared  )
