@@ -141,9 +141,12 @@ if itName != "N/A" and itName != "None" and itName != "":
     status = ""
     thisha = ""
     thissession = ""
+    account = ""
     for cab in svc['custom_attributes']:
       if cab['name'] == 'GUID':
         guid = cab['value']
+      elif cab['name'] == 'account':
+        account = cab['value']
       elif cab['name'] == 'applicationid':
         appID = cab['value']
       elif cab['name'] == 'labCode':
@@ -159,6 +162,8 @@ if itName != "N/A" and itName != "None" and itName != "":
     if status != "complete":
       #print ("skipping")
       continue
+    if account == "openshiftbu":
+      sandboxZone = "openshiftworkshop.com"
     if guid != "":
       for tag in svc['tags']:
         if re.match(r'^\/managed\/servicetype', tag['name']):
