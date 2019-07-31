@@ -137,7 +137,7 @@ if int(num_instances) < 1 or int(num_instances) > 60:
   exit()
 print ("Attempting to deploy %s instances of %s/%s in environment %s." % (num_instances, catName, catItem, environment) )
 ordersvc = ggbin + "order_svc.sh"
-settings = "check=t;expiration=7;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=DeployedWithGuidGrabber" % (labCode, city, salesforce)
+settings = "check=t;check2=t;expiration=7;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=DeployedWithGuidGrabber" % (labCode, city, salesforce)
 if session:
   settings = settings + ";session=" + session
 if spp:
@@ -177,7 +177,9 @@ if region != "":
         region = "emea_vm"
         #regionBackup = "eu_west"
   if serviceType == "agnosticd-shared":
-    settings = '%s;region=%s_shared' % (settings, region)
+    settings = '%s;region=%s' % (settings, region)
+  if serviceType == "agnosticd":
+    settings = '%s;region=%s_sandboxes_gpte' % (settings, region)
   else:
     settings = '%s;region=%s' % (settings, region)
 cmd = [ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings]

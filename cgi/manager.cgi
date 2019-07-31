@@ -1239,7 +1239,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printheader()
     print ("Attempting to deploy <b>%s</b> instances of <b>%s/%s</b> in environment <b>%s</b>.<br><pre>" % (num_instances, catName, catItem, environment) )
     ordersvc = ggbin + "order_svc.sh"
-    settings = "check=t;expiration=7;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (labCode, city, salesforce)
+    settings = "check=t;check2=t;expiration=7;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (labCode, city, salesforce)
     if spp:
       if serviceType == "ravello":
         settings = settings + ";autostart=t;noemail=t;pwauth=t"
@@ -1257,7 +1257,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     if region == "" or region == "None":
       region = "na"
     if spp and serviceType == "agnosticd-shared":
-      settings = "%s;region=%s_shared" % (settings, region)
+      settings = "%s;region=%s" % (settings, region)
+    if spp and serviceType == "agnosticd":
+      settings = "%s;region=%s_sandboxes_gpte" % (settings, region)
     if not spp:
       if catItem == "Implementing Proactive Security OCP":
         settings = "%s;region=%s_gpte" % (settings, region)
