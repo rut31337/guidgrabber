@@ -16,6 +16,23 @@ from shutil import copyfile
 from subprocess import call
 from collections import OrderedDict
 
+def getMatrix(catName, catItem):
+  mType = ""
+  mCloud = ""
+  mDialog = ""
+  if os.path.exists(catalogMatrix):
+    with open(catalogMatrix, encoding='utf-8') as csvM:
+      matrix = csv.DictReader(csvM)
+      if catName in matrix:
+        if catItem in matrix[catName]:
+          if 'Type' in matrix[catName][catItem]:
+            mType = matrix[catName][catItem]['Type']
+          if 'Cloud' in matrix[catName][catItem]:
+            mCloud = matrix[catName][catItem]['Cloud']
+          if 'Service Dialog' in matrix[catName][catItem]:
+            mDialog = matrix[catName][catItem]['Service Dialog']
+  return mType, mCloud, mDialog
+
 def gettok(cfurl, cfuser, cfpass):
   response = requests.get(cfurl + "/api/auth", auth=HTTPBasicAuth(cfuser, cfpass))
   data = response.json()
@@ -131,55 +148,72 @@ def printfooter(operation="none"):
   exit()
 
 def printform(operation="", labcode="", labname="", labkey="", bastion="", docurl="", laburls="", catname="", catitem="", labuser="", labsshkey="", environment="", blueprint="", shared="", infraWorkload="", region="na", city="", salesforce="", surveyLink="", envsize="", studentWorkload="", bareMetal="", serviceType=""):
-  config = configparser.ConfigParser()
-  config.read(cfgfile)
   catalogs = {}
+  print ("<script>")
+  print (" var catalogItems = {")
   if spp:
+    config = configparser.ConfigParser()
+    config.read(cfgfile)
     cfurl = config.get('spp-credentials', 'url')
     cfuser = config.get('spp-credentials', 'user')
     cfpass = config.get('spp-credentials', 'password')
     cfgroup = config.get('spp-credentials', 'group')
+    token = gettok(cfurl, cfuser, cfpass)
+    url = cfurl + "/api/service_catalogs?expand=resources&attributes=name&limit=10000"
+    serviceCatalogsAll = apicall(token, url, "get", cfgroup)
+    for sc in serviceCatalogsAll.get('resources'):
+      catalogs[sc['id']] = sc['name']
+    url = cfurl + "/api/service_templates?attributes=name,service_template_catalog_id&expand=resources&limit=10000"
+    serviceTemplatesAll = apicall(token, url, "get", cfgroup)
+    catalogItems = {}
+    for st in serviceTemplatesAll.get('resources'):
+      stName = st['name']
+      stID = st['id']
+      #if stName != "Ansible F5 Automation Workshop" and stName != "Ansible Network Automation Workshop" and stName != "Ansible RH Enterprise Linux Automation":
+      catID = st['service_template_catalog_id']
+      catalogItems[stID] = {}
+      catalogItems[stID]['catid'] = catID
+      catalogItems[stID]['name'] = stName
+    for catID in catalogs.copy():
+      catEmpty = True
+      for ci, st in catalogItems.items():
+        #for stName, stCatID in stcatalogItems.items():
+        if st['catid'] == catID:
+          catEmpty = False
+      if catEmpty:
+        catalogs.pop(catID)
+    for catID, catName in sorted(catalogs.items(), key=lambda x: x[1], reverse=False):
+      print ("'%s': [" % catName)
+      for ci, st in catalogItems.items():
+      #for stName, stCatID in sorted(catalogItems.items()):
+        #if stCatID == catID:
+        if st['catid'] == catID:
+          #print ("'%s'," % stName )
+          print ("'%s'," % st['name'] )
+      print ( "]," )
+    print ("}")
   else:
-    cfurl = config.get('cloudforms-credentials', 'url')
-    cfuser = config.get('cloudforms-credentials', 'user')
-    cfpass = config.get('cloudforms-credentials', 'password')
-    cfgroup = config.get('cloudforms-credentials', 'group')
-  token = gettok(cfurl, cfuser, cfpass)
-  url = cfurl + "/api/service_catalogs?expand=resources&attributes=name&limit=10000"
-  serviceCatalogsAll = apicall(token, url, "get", cfgroup)
-  for sc in serviceCatalogsAll.get('resources'):
-    catalogs[sc['id']] = sc['name']
-  url = cfurl + "/api/service_templates?attributes=name,service_template_catalog_id&expand=resources&limit=10000"
-  serviceTemplatesAll = apicall(token, url, "get", cfgroup)
-  catalogItems = {}
-  for st in serviceTemplatesAll.get('resources'):
-    stName = st['name']
-    stID = st['id']
-    #if stName != "Ansible F5 Automation Workshop" and stName != "Ansible Network Automation Workshop" and stName != "Ansible RH Enterprise Linux Automation":
-    catID = st['service_template_catalog_id']
-    catalogItems[stID] = {}
-    catalogItems[stID]['catid'] = catID
-    catalogItems[stID]['name'] = stName
-  for catID in catalogs.copy():
-    catEmpty = True
-    for ci, st in catalogItems.items():
-      #for stName, stCatID in stcatalogItems.items():
-      if st['catid'] == catID:
-        catEmpty = False
-    if catEmpty:
-      catalogs.pop(catID)
-  print ("<script>")
-  print (" var catalogItems = {")
-  for catID, catName in sorted(catalogs.items(), key=lambda x: x[1], reverse=False):
-    print ("'%s': [" % catName)
-    for ci, st in catalogItems.items():
-    #for stName, stCatID in sorted(catalogItems.items()):
-      #if stCatID == catID:
-      if st['catid'] == catID:
-        #print ("'%s'," % stName )
-        print ("'%s'," % st['name'] )
-    print ( "]," )
-  print ("}")
+    #cfurl = config.get('cloudforms-credentials', 'url')
+    #cfuser = config.get('cloudforms-credentials', 'user')
+    #cfpass = config.get('cloudforms-credentials', 'password')
+    #cfgroup = config.get('cloudforms-credentials', 'group')
+    if os.path.exists(catalogMatrix):
+      with open(catalogMatrix, encoding='utf-8') as csvM:
+        matrix = csv.DictReader(csvM)
+        for row in matrix:
+          mCatalog = row['Catalog']
+          if 'testing' in mCatalog.lower() or 'development' in mCatalog.lower() or 'decommissioned' in mCatalog.lower() or 'utilities' in mCatalog.lower() or 'na channel workshops' in mCatalog.lower():
+            continue
+          mItem = row['Catalog Item']
+          #if mCatalog not in catalogs:
+          #  catalogs[mCatalog] = {}
+          catalogs.setdefault(mCatalog, []).append(mItem) 
+    for catName, ci in sorted(catalogs.items(), key=lambda x: x[1], reverse=False):
+      print ("'%s': [" % catName)
+      for catItem in sorted(ci):
+        print ("'%s'," % catItem )
+      print ( "]," )
+    print ("}")
   print ("</script>")
   print ("""
   <script>
@@ -219,6 +253,75 @@ tr.brd{
 }
 </style>
 """)
+  print ("""
+	<script>
+	function showRavello(){
+	  document.getElementById('ravello').style.display ='table-row-group';
+	  document.getElementById('agnosticd').style.display = 'none';
+	  document.getElementById('agnosticd-shared').style.display = 'none';
+	}
+	function showAgnosticD(){
+	  document.getElementById('ravello').style.display ='none';
+	  document.getElementById('agnosticd').style.display = 'table-row-group';
+	  document.getElementById('agnosticd-shared').style.display = 'none';
+	}
+	function showAgnosticDshared(){
+	  document.getElementById('ravello').style.display ='none';
+	  document.getElementById('agnosticd').style.display = 'table-row-group';
+	  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
+	}
+	function showUserPassword(){
+	  document.getElementById('ravello').style.display ='none';
+	  document.getElementById('agnosticd').style.display = 'none';
+	  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
+	}
+</script>
+""")
+  if not spp:
+    sharedItems = []
+    dedItems = []
+    if os.path.exists(catalogMatrix):
+      with open(catalogMatrix, encoding='utf-8') as csvM:
+        matrix = csv.DictReader(csvM)
+        for row in matrix:
+          mDialog = row['Service Dialog']
+          mItem = row['Catalog Item']
+          if 'openshift shared summit' in mDialog.lower() or 'dev ocp4 openshift bu' in mDialog.lower() or 'openshift bu' in mDialog.lower() or 'ocp4 openshift bu' in mDialog.lower() or 'linklight' in mDialog.lower() or 'azure' in mDialog.lower() or 'for aro' in mDialog.lower():
+            sharedItems.append(mItem)
+          if 'sandbox' in mDialog.lower():
+            dedItems.append(mItem)
+    print ("""
+	<script>
+	function setType(selectedItem){
+		if (
+""")
+    for mItem in sharedItems:
+      if mItem == sharedItems[-1]:
+        print ("                        selectedItem === \"%s\"" % mItem)
+      else:
+        print ("                        selectedItem === \"%s\" ||" % mItem)
+    print ("""
+		) {
+                        showAgnosticDshared();
+	  		document.getElementById('servicetype-AgnosticDshared').checked = true;
+		} else if (
+""")
+    for mItem in dedItems:
+      if mItem == dedItems[-1]:
+        print ("                        selectedItem === \"%s\"" % mItem)
+      else:
+        print ("                        selectedItem === \"%s\" ||" % mItem)
+    print ("""
+		) {
+                        showAgnosticD();
+	  		document.getElementById('servicetype-AgnosticD').checked = true;
+		} else {
+                        showRavello();
+	  		document.getElementById('servicetype-Ravello').checked = true;
+		}
+	}
+</script>
+""")
   print ('<form id="myform" method="post" action="%s?operation=%s%s">' % (myurl, operation, imp) )
   print ("<center><table width=60% border=0>")
   if operation == 'create_lab':
@@ -255,12 +358,20 @@ tr.brd{
   print ("</td></tr>" )
   print ("</tbody>")
   print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Name*:</b></td><td><select id='catname' onchange=\"setItems(this, document.getElementById('catitems'), '%s');\" name='catname'>" % catitem)
-  for catid,cat in catalogs.items():
-    if catname == cat:
-      selected = " selected"
-    else:
-      selected = ""
-    print ("<option value='%s' %s>%s</option>" % (cat, selected, cat) )
+  if spp:
+    for catid,cat in catalogs.items():
+      if catname == cat:
+        selected = " selected"
+      else:
+        selected = ""
+      print ("<option value='%s' %s>%s</option>" % (cat, selected, cat) )
+  else:
+    for cat, ci in sorted(catalogs.items()):
+      if catname == cat:
+        selected = " selected"
+      else:
+        selected = ""
+      print ("<option value='%s' %s>%s</option>" % (cat, selected, cat) )
   print ("</select></td></tr>")
   if spp:
     print ("<tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Catalog Item*:</b></td><td><select id='catitems' name='catitem'></select></td></tr></tbody>" )
@@ -284,13 +395,13 @@ tr.brd{
     ravc = "checked='checked'"
     serviceType = "ravello"
   print ("""
-<input type="radio" id="servicetype" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
-<input type="radio" id="servicetype" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
-<input type="radio" id="servicetype" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
-<input type="radio" id="servicetype" name="servicetype" %s value="agnosticd-nosandbox" onclick="showAgnosticD()"/>AgnosticD No Sandbox 
+<input type="radio" id="servicetype-Ravello" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
+<input type="radio" id="servicetype-AgnosticD" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
+<input type="radio" id="servicetype-AgnosticDshared" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
+<input type="radio" id="servicetype-AgnosticDnosandbox" name="servicetype" %s value="agnosticd-nosandbox" onclick="showAgnosticD()"/>AgnosticD No Sandbox 
 """ % (ravc,agdc,agsc,agns))
   print ("""
-&nbsp;|&nbsp;<input type="radio" id="servicetype" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
+&nbsp;|&nbsp;<input type="radio" id="servicetype-UserPassword" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
 """ % (upc))
   print ("</td></tr>")
   print("</tbody>")
@@ -376,49 +487,7 @@ tr.brd{
     print ("<script>document.getElementById('agnosticd-shared').style.display='table-row-group';</script>")
   else:
     print ("<script>document.getElementById('ravello').style.display='table-row-group';</script>")
-  print ("""
-	<script>
-	function showRavello(){
-	  document.getElementById('ravello').style.display ='table-row-group';
-	  document.getElementById('agnosticd').style.display = 'none';
-	  document.getElementById('agnosticd-shared').style.display = 'none';
-	}
-	function showAgnosticD(){
-	  document.getElementById('ravello').style.display ='none';
-	  document.getElementById('agnosticd').style.display = 'table-row-group';
-	  document.getElementById('agnosticd-shared').style.display = 'none';
-	}
-	function showAgnosticDshared(){
-	  document.getElementById('ravello').style.display ='none';
-	  document.getElementById('agnosticd').style.display = 'table-row-group';
-	  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
-	}
-	function showUserPassword(){
-	  document.getElementById('ravello').style.display ='none';
-	  document.getElementById('agnosticd').style.display = 'none';
-	  document.getElementById('agnosticd-shared').style.display = 'table-row-group';
-	}
-	function setType(selectedItem){
-		if (
-		 	selectedItem === "OCP & Ansible Better Together Dev Track" ||
-		 	selectedItem === "Implementing Proactive Security OCP" ||
-		 	selectedItem === "Ansible F5 Automation Workshop" ||
-		 	selectedItem === "Ansible Network Automation Workshop" ||
-		 	selectedItem === "Ansible RH Enterprise Linux Automation" ||
-		 	selectedItem === "OpenShift Workshop" ||
-		 	selectedItem === "OpenShift 4 Workshop" ||
-			selectedItem === "Integreatly Workshop" ||
-			selectedItem === "OpenShift on Azure"
-		) {
-	  		document.getElementById('agnosticd-shared').style.display = 'table-row-group';
-	  		document.getElementById('servicetype').setAttribute('value','agnosticd-shared');
-		} else {
-	  		document.getElementById('agnosticd-shared').style.display = 'none';
-	  		document.getElementById('servicetype').setAttribute('value','ravello');
-		}
-	}
-</script>
-""")
+
 
 if not os.environ.get('REMOTE_USER'): 
   printheader()
@@ -431,7 +500,7 @@ if profile == "generic_tester" or profile == "generic_sko" or profile == "generi
   spp = True
 else:
   spp = False
-myurl = "/gg/manager.cgi"
+myurl = "/gg/manager-beta.cgi"
 
 tester = False
 summit = False
@@ -453,6 +522,8 @@ ggroot = "/var/www/guidgrabber"
 ggetc = ggroot + "/etc/"
 ggbin = ggroot + "/bin/"
 cfgfile = ggetc + "gg.cfg"
+
+catalogMatrix = "/usr/local/etc/demo00.opentlc.com-matrix.csv"
 
 admin = False
 c = configparser.ConfigParser()
@@ -613,6 +684,7 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   bastion = form.getvalue('bastion')
   docURL = form.getvalue('docurl')
   labURLs = form.getvalue('laburls')
+  labURLs = labURLs.replace('"', '')
   catName = form.getvalue('catname')
   catItem = form.getvalue('catitem')
   labUser = form.getvalue('labuser')
@@ -1269,16 +1341,20 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         settings = "%s;region=%s" % (settings, region)
       settings = settings + ";expiration=1"
     else:
-      if catItem == "Implementing Proactive Security OCP":
-        settings = "%s;region=%s_gpte" % (settings, region)
-      elif catItem == "OCP and Container Storage for Admins" or catItem == "Red Hat OpenShift Service Mesh in Action":
+      mType, mCloud, mDialog = getMatrix(catName, catItem)
+      if 'sandbox' in mDialog.lower():
         settings = "%s;region=%s_sandbox_gpte" % (settings, region)
-      elif catItem == "OpenShift Workshop" or catItem == "Integreatly Workshop" or catItem == "OpenShift 4 Workshop" or catItem == "OCP & Ansible Better Together Dev Track":
+      elif 'openshift shared summit' in mDialog.lower():
+        settings = "%s;region=%s_gpte" % (settings, region)
+      elif 'dev ocp4 openshift bu' in mDialog.lower():
+        settings = "%s;region=dev_%s_openshiftbu" % (settings, region)
+      elif 'openshift bu' in mDialog.lower() or 'ocp4 openshift bu' in mDialog.lower():
         settings = "%s;region=%s_openshiftbu" % (settings, region)
-      elif catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation":
+      elif 'linklight' in mDialog.lower():
         settings = "%s;region=%s_ansiblebu" % (settings, region)
-      elif catItem == "OpenShift on Azure":
+      elif 'azure' in mDialog.lower() or 'for aro' in mDialog.lower():
         settings = "%s;region=azure_eastus" % (settings)
+
       else:
         settings = "%s;region=%s" % (settings, region)
       settings = settings + ";expiration=7"
