@@ -473,6 +473,7 @@ elif operation == "showguid":
     printfooter()
     exit()
   sandboxZone = ""
+  kubeadmin = ""
   appID = ""
   sharedGUID = ""
   allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
@@ -491,6 +492,8 @@ elif operation == "showguid":
             sharedGUID = appID
         if 'sandboxzone' in allrow and allrow['sandboxzone']:
           sandboxZone = allrow['sandboxzone']
+        if 'kubeadmin' in allrow and allrow['kubeadmin']:
+          kubeadmin = allrow['kubeadmin']
         break
 
   print("<center><table border=0>")
@@ -550,6 +553,8 @@ elif operation == "showguid":
     for u in urls.split(";"):
       if sandboxZone != "":
         u = u.replace('DOMAIN', sandboxZone)
+      if kubeadmin != "":
+        u = u.replace('KUBEADMIN', kubeadmin)
       if shared and sharedGUID != "":
         u = u.replace('REPL', sharedGUID)
         if catalogItem == "Integreatly Workshop" and int(guid) <= 9:

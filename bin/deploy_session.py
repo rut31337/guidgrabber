@@ -147,7 +147,7 @@ if spp:
       settings = '%s;blueprint=%s' % (settings, blueprint)
     if bareMetal != "":
       settings = '%s;bm=%s' % (settings, bareMetal)
-  if serviceType == "agnosticd" or serviceType == "agnosticd-shared":
+  if serviceType == "agnosticd" or serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
     if infraWorkload != "":
       settings = '%s;infra_workloads=%s' % (settings, infraWorkload)
     if studentWorkload != "":
@@ -176,9 +176,9 @@ if region != "":
       else:
         region = "emea_vm"
         #regionBackup = "eu_west"
-  if serviceType == "agnosticd-shared":
+  if serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
     settings = '%s;region=%s' % (settings, region)
-  if serviceType == "agnosticd":
+  elif serviceType == "agnosticd":
     settings = '%s;region=%s_sandboxes_gpte' % (settings, region)
   else:
     settings = '%s;region=%s' % (settings, region)

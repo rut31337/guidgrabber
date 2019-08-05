@@ -57,7 +57,7 @@ def apicall(token, url, op, inp = None ):
   return obj.get('resources')
 
 f = open(outFile, 'w')
-f.write("guid,appid,servicetype,sandboxzone\n")
+f.write('"guid","appid","servicetype","sandboxzone","kubeadmin"\n')
 
 if itName != "N/A" and itName != "None" and itName != "":
   token = gettok()
@@ -138,6 +138,7 @@ if itName != "N/A" and itName != "None" and itName != "":
     lc = ""
     ln = ""
     sandboxZone = ""
+    kubeadmin = ""
     status = ""
     thisha = ""
     thissession = ""
@@ -155,6 +156,8 @@ if itName != "N/A" and itName != "None" and itName != "":
         status = cab['value']
       elif cab['name'] == 'sandboxzone':
         sandboxZone = cab['value']
+      elif cab['name'] == 'kubeadmin':
+        kubeadmin = cab['value']
       if cab['name'] == 'session':
         thissession = cab['value']
       if cab['name'] == 'HA':
@@ -181,19 +184,17 @@ if itName != "N/A" and itName != "None" and itName != "":
             #print("hacheck " + thissession + " " + session + " " + thisha + " " + ha)
             if thissession == session and thisha == ha:
               #print("writing " + thissession + " " + session + " " + thisha + " " + ha)
-              ln=guid + "," + appID + "," + serviceType
+              ln = guid + "," + appID + "," + serviceType
           else:
             #print("reglcheck" + thissession + " " + session )
             if thissession == session:
-              ln=guid + "," + appID + "," + serviceType
+              ln = guid + "," + appID + "," + serviceType
         else:
-          ln=guid + "," + appID + "," + serviceType
+          ln = guid + "," + appID + "," + serviceType
     else:
-      ln=guid + "," + appID + "," + serviceType
+      ln = guid + "," + appID + "," + serviceType
     if ln != "":
-      if sandboxZone != "":
-        ln = ln + "," + sandboxZone
-      ln = ln + "\n"
+      ln = ln + "," + sandboxZone + "," + kubeadmin + "\n"
       f.write(ln)
   #print ("Wrote file " + outFile)
 else:

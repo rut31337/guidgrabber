@@ -270,11 +270,14 @@ tr.brd{
   ravc = ""
   agdc = ""
   agsc = ""
+  agns = ""
   upc = ""
   if serviceType == 'agnosticd':
     agdc = "checked='checked'"
   elif serviceType == 'agnosticd-shared':
     agsc = "checked='checked'"
+  elif serviceType == 'agnosticd-nosandbox':
+    agns = "checked='checked'"
   elif serviceType == 'user-password':
     upc = "checked='checked'"
   else:
@@ -284,7 +287,8 @@ tr.brd{
 <input type="radio" id="servicetype" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
 <input type="radio" id="servicetype" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
 <input type="radio" id="servicetype" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
-""" % (ravc,agdc,agsc))
+<input type="radio" id="servicetype" name="servicetype" %s value="agnosticd-nosandbox" onclick="showAgnosticD()"/>AgnosticD No Sandbox 
+""" % (ravc,agdc,agsc,agns))
   print ("""
 &nbsp;|&nbsp;<input type="radio" id="servicetype" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
 """ % (upc))
@@ -363,7 +367,7 @@ tr.brd{
     print ("<script>")
     print ("window.onload = createOption(document.getElementById('catitems'), '%s', '%s', true);" % (catitem, catitem))
     print ("</script>")
-  if serviceType == "agnosticd":
+  if serviceType == "agnosticd" or serviceType == "agnosticd-nosandbox":
     print ("<script>document.getElementById('agnosticd').style.display='table-row-group';</script>")
   elif serviceType == "agnosticd-shared":
     print ("<script>document.getElementById('agnosticd').style.display='table-row-group';</script>")
@@ -1159,13 +1163,13 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         exit()
       print ("<center>Creating %s shared users..." % shared )
       with open(allGuidsCSV, "w", encoding='utf-8') as agc:
-        ln = '"guid","appid","servicetype","sandboxzone"\n'
+        ln = '"guid","appid","servicetype","sandboxzone","kubeadmin"\n'
         agc.write(ln)
         i = 1
         shr = int(shared)
         while i <= shr:
           user = str(i)
-          ln = '"%s","%s","%s"\n' % (user, guid, "shared")
+          ln = '"%s","%s","%s",,\n' % (user, guid, "shared")
           i = i + 1
           agc.write(ln)
       print ("<br><button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"location.href='%s?operation=view_lab&labcode=%s%s'\" type=button>View Lab&nbsp;></button>" % (myurl, labCode, imp) )
@@ -1239,7 +1243,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     printheader()
     print ("Attempting to deploy <b>%s</b> instances of <b>%s/%s</b> in environment <b>%s</b>.<br><pre>" % (num_instances, catName, catItem, environment) )
     ordersvc = ggbin + "order_svc.sh"
-    settings = "check=t;check2=t;expiration=7;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (labCode, city, salesforce)
+    settings = "check=t;check2=t;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (labCode, city, salesforce)
     if spp:
       if serviceType == "ravello":
         settings = settings + ";autostart=t;noemail=t;pwauth=t"
@@ -1247,7 +1251,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           settings = "%s;blueprint=%s" % (settings, blueprint)
         if bareMetal != "":
           settings = "%s;bm=%s" % (settings, bareMetal)
-      if serviceType == "agnosticd" or serviceType == "agnosticd-shared":
+      if serviceType == "agnosticd" or serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
         if infraWorkload != "":
           settings = "%s;infra_workloads=%s" % (settings, infraWorkload)
         if studentWorkload != "":
@@ -1256,21 +1260,28 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           settings = "%s;envsize=%s" % (settings, envsize)
     if region == "" or region == "None":
       region = "na"
-    if spp and serviceType == "agnosticd-shared":
-      settings = "%s;region=%s" % (settings, region)
-    if spp and serviceType == "agnosticd":
-      settings = "%s;region=%s_sandboxes_gpte" % (settings, region)
-    if not spp:
+    if spp:
+      if serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
+        settings = "%s;region=%s" % (settings, region)
+      elif serviceType == "agnosticd":
+        settings = "%s;region=%s_sandboxes_gpte" % (settings, region)
+      else:
+        settings = "%s;region=%s" % (settings, region)
+      settings = settings + ";expiration=1"
+    else:
       if catItem == "Implementing Proactive Security OCP":
         settings = "%s;region=%s_gpte" % (settings, region)
+      elif catItem == "OCP and Container Storage for Admins" or catItem == "Red Hat OpenShift Service Mesh in Action":
+        settings = "%s;region=%s_sandbox_gpte" % (settings, region)
       elif catItem == "OpenShift Workshop" or catItem == "Integreatly Workshop" or catItem == "OpenShift 4 Workshop" or catItem == "OCP & Ansible Better Together Dev Track":
         settings = "%s;region=%s_openshiftbu" % (settings, region)
       elif catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation":
         settings = "%s;region=%s_ansiblebu" % (settings, region)
       elif catItem == "OpenShift on Azure":
         settings = "%s;region=azure_eastus" % (settings)
-    else:
-      settings = "%s;region=%s" % (settings, region)
+      else:
+        settings = "%s;region=%s" % (settings, region)
+      settings = settings + ";expiration=7"
     if serviceType == "agnosticd-shared":
       if shared != "":
         settings = "%s;users=%s" % (settings, shared)
