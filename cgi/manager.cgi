@@ -500,7 +500,7 @@ if profile == "generic_tester" or profile == "generic_sko" or profile == "generi
   spp = True
 else:
   spp = False
-myurl = "/gg/manager-beta.cgi"
+myurl = "/gg/manager.cgi"
 
 tester = False
 summit = False
@@ -683,8 +683,11 @@ elif operation == "create_lab" or operation == 'create_new_lab':
   labKey = form.getvalue('labkey')
   bastion = form.getvalue('bastion')
   docURL = form.getvalue('docurl')
-  labURLs = form.getvalue('laburls')
-  labURLs = labURLs.replace('"', '')
+  if 'laburls' in form:
+    labURLs = form.getvalue('laburls')
+    labURLs = labURLs.replace('"', '')
+  else:
+    labURLs = ""
   catName = form.getvalue('catname')
   catItem = form.getvalue('catitem')
   labUser = form.getvalue('labuser')
