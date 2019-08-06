@@ -20,17 +20,26 @@ def getMatrix(catName, catItem):
   mType = ""
   mCloud = ""
   mDialog = ""
+  found = False
   if os.path.exists(catalogMatrix):
     with open(catalogMatrix, encoding='utf-8') as csvM:
       matrix = csv.DictReader(csvM)
-      if catName in matrix:
-        if catItem in matrix[catName]:
-          if 'Type' in matrix[catName][catItem]:
-            mType = matrix[catName][catItem]['Type']
-          if 'Cloud' in matrix[catName][catItem]:
-            mCloud = matrix[catName][catItem]['Cloud']
-          if 'Service Dialog' in matrix[catName][catItem]:
-            mDialog = matrix[catName][catItem]['Service Dialog']
+      #print("DEBUG: Looking for catname " + catName)
+      #print("DEBUG: Looking for catitem " + catItem)
+      for row in matrix:
+        if row['Catalog'] == catName and row['Catalog Item'] == catItem:
+          if 'Type' in row:
+            mType = row['Type']
+          if 'Cloud' in row:
+            mCloud = row['Cloud']
+          if 'Service Dialog' in row:
+            mDialog = row['Service Dialog']
+          found = True
+          break
+    if not found:
+      print("Warning: " + catName + " " + catItem + " is not in the Matrix")
+  else:
+    print("Warning: Cannot find matrix file " + catalogMatrix)
   return mType, mCloud, mDialog
 
 def gettok(cfurl, cfuser, cfpass):
@@ -1345,6 +1354,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       settings = settings + ";expiration=1"
     else:
       mType, mCloud, mDialog = getMatrix(catName, catItem)
+      #print ("DEBUG: Catalog Item Dialog In Matrix Is: " + mDialog.lower())
       if 'sandbox' in mDialog.lower():
         settings = "%s;region=%s_sandbox_gpte" % (settings, region)
       elif 'openshift shared summit' in mDialog.lower():
@@ -1357,7 +1367,6 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         settings = "%s;region=%s_ansiblebu" % (settings, region)
       elif 'azure' in mDialog.lower() or 'for aro' in mDialog.lower():
         settings = "%s;region=azure_eastus" % (settings)
-
       else:
         settings = "%s;region=%s" % (settings, region)
       settings = settings + ";expiration=7"
