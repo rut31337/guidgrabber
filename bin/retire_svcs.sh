@@ -125,7 +125,7 @@ do
   if [ -n "$labCode" ]
   then
     cas=`curl -s $ssl -H "X-Auth-Token: $tok" -H "Content-Type: application/json" -X GET "$svc?attributes=custom_attributes&expand=resources&filter%5B%5D=evm_owner_id='$userid'&filter%5B%5D=service_template_id='$itemID'"| jq '.custom_attributes[]'| jq -r '"\(.name),\(.value)"'`
-    for ca in cas
+    for ca in $cas
     do
       k=`echo $ca|cut -f1 -d,`
       if [ $k == "labCode" ]
