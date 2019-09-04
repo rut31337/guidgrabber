@@ -14,6 +14,7 @@ def mkparser():
   parser.add_argument("-p", dest="profile",default=None,help='Profile <profile>',required=True)
   parser.add_argument("-n", dest="numInstances",default=None,help='Number of instances <num>',required=True)
   parser.add_argument("-s", dest="session",default=None,help='Session <session>')
+  parser.add_argument("-r", dest="region",default=None,help='Region <region>')
   parser.add_argument("-g", dest="group",default="20",help='Deploy in Groups <num>')
   return parser
 
@@ -48,6 +49,11 @@ if args.session:
   session = args.session
 group = args.group
 profile = args.profile
+
+if args.region:
+  regionOverride = args.region
+else:
+  regionOverride = ""
 
 ggroot = "/root/guidgrabber"
 ggetc = ggroot + "/etc/"
@@ -94,7 +100,10 @@ with open(labConfigCSV, encoding='utf-8') as csvFile:
       if 'envsize' in row and row['envsize'] is not None and row['envsize'] != "None":
         envsize = row['envsize']
       if 'region' in row and row['region'] is not None and row['region'] != "None":
-        region = row['region']
+        if regionOverride != "":
+          region = row['region']
+        else:
+          region = regionOverride
       if 'city' in row and row['city'] is not None and row['city'] != "None":
         city = row['city']
       if 'salesforce' in row and row['salesforce'] is not None and row['salesforce'] != "None":
