@@ -158,25 +158,11 @@ if spp:
   if serviceType == "agnosticd-shared":
     if shared != "":
       settings = '%s;users=%s' % (settings, shared)
-if bareMetal == "t":
-  print ("Bare Metal Enabled")
 if region != "":
-  if serviceType == "ravello":
-    if region == "na":
-      if bareMetal == "t":
-        region = "na_baremetal"
-        #regionBackup = "na_east"
-      else:
-        region = "na_vm"
-        #regionBackup = "eu_west"
-    elif region == "emea":
-      if bareMetal == "t":
-        region = "emea_baremetal"
-        #regionBackup = "eu_central"
-      else:
-        region = "emea_vm"
-        #regionBackup = "eu_west"
-  if serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
+  if serviceType == "ravello" and bareMetal == "t":
+    region = region + "_baremetal"
+    settings = '%s;region=%s' % (settings, region)
+  elif serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
     settings = '%s;region=%s' % (settings, region)
   elif serviceType == "agnosticd":
     settings = '%s;region=%s_sandboxes_gpte' % (settings, region)

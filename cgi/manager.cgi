@@ -147,7 +147,7 @@ def printfooter(operation="none"):
     imph = ""
     if impersonate:
       imph = "?impersonate=" + profile
-    print ('<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + imph + '\'">Home</button></center>' )
+    print ('<center><button class="w3-btn w3-white w3-border w3-padding-small" onclick="window.location.href=\''+ myurl + imph + '\'">Main Menu</button></center>' )
   if summit:
     includehtml('footer-manager-summit.inc')
   else:
@@ -391,6 +391,7 @@ tr.brd{
   agdc = ""
   agsc = ""
   agns = ""
+  agdm = ""
   upc = ""
   if serviceType == 'agnosticd':
     agdc = "checked='checked'"
@@ -398,6 +399,8 @@ tr.brd{
     agsc = "checked='checked'"
   elif serviceType == 'agnosticd-nosandbox':
     agns = "checked='checked'"
+  elif serviceType == 'agnosticd-multi':
+    agdm = "checked='checked'"
   elif serviceType == 'user-password':
     upc = "checked='checked'"
   else:
@@ -408,7 +411,8 @@ tr.brd{
 <input type="radio" id="servicetype-AgnosticD" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
 <input type="radio" id="servicetype-AgnosticDshared" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
 <input type="radio" id="servicetype-AgnosticDnosandbox" name="servicetype" %s value="agnosticd-nosandbox" onclick="showAgnosticD()"/>AgnosticD No Sandbox 
-""" % (ravc,agdc,agsc,agns))
+<input type="radio" id="servicetype-AgnosticDmulti" name="servicetype" %s value="agnosticd-multi" onclick="showAgnosticD()"/>AgnosticD Multi 
+""" % (ravc,agdc,agsc,agns,agdm))
   print ("""
 &nbsp;|&nbsp;<input type="radio" id="servicetype-UserPassword" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
 """ % (upc))
@@ -487,7 +491,7 @@ tr.brd{
     print ("<script>")
     print ("window.onload = createOption(document.getElementById('catitems'), '%s', '%s', true);" % (catitem, catitem))
     print ("</script>")
-  if serviceType == "agnosticd" or serviceType == "agnosticd-nosandbox":
+  if serviceType == "agnosticd" or serviceType == "agnosticd-nosandbox" or serviceType == "agnosticd-multi":
     print ("<script>document.getElementById('agnosticd').style.display='table-row-group';</script>")
   elif serviceType == "agnosticd-shared":
     print ("<script>document.getElementById('agnosticd').style.display='table-row-group';</script>")
@@ -1335,7 +1339,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
           settings = "%s;blueprint=%s" % (settings, blueprint)
         if bareMetal != "":
           settings = "%s;bm=%s" % (settings, bareMetal)
-      if serviceType == "agnosticd" or serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
+      if serviceType == "agnosticd" or serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox" or serviceType == "agnosticd-multi":
         if infraWorkload != "":
           settings = "%s;infra_workloads=%s" % (settings, infraWorkload)
         if studentWorkload != "":
@@ -1347,7 +1351,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     if spp:
       if serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
         settings = "%s;region=%s" % (settings, region)
-      elif serviceType == "agnosticd":
+      elif serviceType == "agnosticd" or serviceType == "agnosticd-multi":
         settings = "%s;region=%s_sandboxes_gpte" % (settings, region)
       else:
         settings = "%s;region=%s" % (settings, region)
@@ -1370,6 +1374,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       else:
         settings = "%s;region=%s" % (settings, region)
       settings = settings + ";expiration=7"
+    if serviceType == "agnosticd-multi":
+      settings = settings + ";cluster_type=dedicated-sub-addition"
     if serviceType == "agnosticd-shared":
       if shared != "":
         settings = "%s;users=%s" % (settings, shared)
@@ -1377,8 +1383,18 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       settings = settings + ";users=1"
     #print ( "DEBUG: %s" % (settings))
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings])
-    print ("</pre><center>" )
-    print ("If deployment started successfully, wait at least 20 minutes from the output of this message (to complete deployment and GUID generation) then click <a href=%s?operation=update_guids%s>here</a> to update available the available GUIDs database.  Optionally you can use <b>Update Available Lab GUIDs</b> from the main menu.<br><center>" % (myurl, imp) )
+    print ("</pre>" )
+    if serviceType == "ravello":
+      waittime = "20"
+    elif serviceType == "agnosticd" or serviceType == "agnosticd-nosandbox" or serviceType == "agnosticd-multi":
+      waittime = "50"
+    elif serviceType == "agnosticd-shared":
+      waittime = "10"
+    else:
+      waittime = "5"
+    now = datetime.datetime.utcnow()
+    now = str(now.strftime("%Y-%m-%d %H:%M"))
+    print ("<br>If deployment started successfully, please wait at least %s minutes from %s UTC for complete deployment and GUID generation.<br>At that time you can click <a href=%s?operation=update_guids%s>here</a> or use <b>Update Available Lab GUIDs</b> from the main menu to update the available GUID database.<br><center>" % (waittime, now, myurl, imp) )
     printfooter()
     exit()
   elif operation == "delete_instances":
