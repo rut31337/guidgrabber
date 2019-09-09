@@ -14,8 +14,11 @@ def mkparser():
   parser.add_argument("-p", dest="profile",default=None,help='Profile <profile>',required=True)
   parser.add_argument("-n", dest="numInstances",default=None,help='Number of instances <num>',required=True)
   parser.add_argument("-s", dest="session",default=None,help='Session <session>')
+  parser.add_argument("-S", dest="sleep",default="5",help='Sleep <sleep>')
   parser.add_argument("-r", dest="region",default=None,help='Region <region>')
   parser.add_argument("-g", dest="group",default="20",help='Deploy in Groups <num>')
+  parser.add_argument("-c", dest="cfgfile",default="event-deploy.cfg",help='Config File <cfg>')
+  parser.add_argument("-D", dest="debug", action="store_true")
   return parser
 
 def execute(command, quiet=False):
@@ -55,16 +58,19 @@ if args.region:
 else:
   regionOverride = ""
 
-ggroot = "/root/guidgrabber"
+ggroot = "/root/provision"
 ggetc = ggroot + "/etc/"
-ggbin = ggroot + "/bin/"
-cfgfile = ggetc + "gg.cfg"
+ggbin = ggroot + "/common/"
+
+cfgfile = ggetc + args.cfgfile
 profileDir = ggetc + "/" + profile
 
 labConfigCSV = profileDir + "/labconfig.csv"
 if not os.path.exists(labConfigCSV):
   prerror("No lab config at %s" % labConfigCSV)
   exit(1)
+
+slp = args.sleep
 
 catName = ""
 catItem = ""
@@ -136,12 +142,12 @@ else:
 
 config = configparser.ConfigParser()
 config.read(cfgfile)
-cfuser = config.get('cloudforms-credentials', 'user')
-cfpass = config.get('cloudforms-credentials', 'password')
+cfuser = config.get(profile, 'user')
+cfpass = config.get(profile, 'password')
 if not re.match("^[0-9]+$", num_instances):
   prerror("ERROR: Number of instances must be a valid number.")
   exit()
-if int(num_instances) < 1 or int(num_instances) > 60:
+if int(num_instances) < 1:
   prerror("ERROR: Number of instances must be a positive number.")
   exit()
 print ("Attempting to deploy %s instances of %s/%s in environment %s." % (num_instances, catName, catItem, environment) )
@@ -168,8 +174,11 @@ if spp:
     if shared != "":
       settings = '%s;users=%s' % (settings, shared)
 if region != "":
-  if serviceType == "ravello" and bareMetal == "t":
-    region = region + "_baremetal"
+  if serviceType == "ravello":
+    if bareMetal == "t":
+      region = region + "_baremetal"
+    elif bareMetal == "g":
+      region = region + "_gce"
     settings = '%s;region=%s' % (settings, region)
   elif serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
     settings = '%s;region=%s' % (settings, region)
@@ -180,8 +189,9 @@ if region != "":
 cmd = [ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings]
 if regionBackup != "":
   cmd.extend(["-b", regionBackup])
-if serviceType == "ravello":
-  cmd.extend([ "-g", group, "-p", "5" ])
-#print(cmd)
-execute(cmd)
+cmd.extend([ "-g", group, "-p", slp ])
+if args.debug:
+  print(cmd)
+else:
+  execute(cmd)
 exit()

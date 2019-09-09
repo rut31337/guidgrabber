@@ -444,6 +444,7 @@ elif operation == "showguid":
   surveyLink = ""
   shared = False
   sharedUserPassword = False
+  linklight = False
   with open(labConfigCSV, encoding='utf-8') as csvFile:
     labCodes = csv.DictReader(csvFile)
     for row in labCodes:
@@ -464,6 +465,9 @@ elif operation == "showguid":
             guidType = 'number'
           elif row['servicetype'] == "user-password":
             sharedUserPassword = True
+            guidType = 'user'
+          elif row['servicetype'] == "linklight":
+            linklight = True
             guidType = 'user'
         break
   if not found:
@@ -488,14 +492,16 @@ elif operation == "showguid":
       if allrow['guid'] == guid:
         if 'appid' in allrow and allrow['appid']:
           appID = allrow['appid']
-          if shared or sharedUserPassword:
+          if shared or sharedUserPassword or linklight:
             sharedGUID = appID
         if 'sandboxzone' in allrow and allrow['sandboxzone']:
           sandboxZone = allrow['sandboxzone']
         if 'kubeadmin' in allrow and allrow['kubeadmin']:
           kubeadmin = allrow['kubeadmin']
         break
-
+  if linklight:
+    labUser = guid
+    bastion = sandboxZone
   print("<center><table border=0>")
   print("<tr><td>")
   print(("<center><h2>Welcome to: %s</h2><table border=0>" % description))
@@ -506,8 +512,10 @@ elif operation == "showguid":
   print(("<tr><td align=right>Your assigned lab %s is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (guidType,g)))
   if shared:
     print(("<tr><td align=right>Your shared lab GUID is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
-  if sharedUserPassword:
+  if sharedUserPassword or linklight:
     print(("<tr><td align=right>Your password is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sharedGUID)))
+  if linklight:
+    print(("<tr><td align=right>Your IP is</td><td align=center><table border=1><tr><td><font size='5'><pre><b>%s</b></pre></font></td></tr></table></td></tr>" % (sandboxZone)))
   print("</table></center>" )
   print("Let's get started! Please read these instructions carefully before starting to have the best lab experience:")
   print(("<ul><li>Save the above <b>%s</b> as you will need it to access your lab's systems from your workstation.</li>" % guidType))
@@ -541,7 +549,8 @@ elif operation == "showguid":
     else:
       lk = ""
     print(("<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)))
-    print("<li>Unless otherwise stated in the lab instructions, the password is: <pre><b>r3dh4t1!</b></pre></li>")
+    if not linklight:
+      print("<li>Unless otherwise stated in the lab instructions, the password is: <pre><b>r3dh4t1!</b></pre></li>")
   else:
     #if urls != "None":
     #  print ("<li>For example, if the lab requires you to access a URL it would be like this<br><pre>https://host-{0}.rhpds.opentlc.com</pre></li>".format(guid))
