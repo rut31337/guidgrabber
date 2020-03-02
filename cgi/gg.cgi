@@ -549,7 +549,7 @@ elif operation == "showguid":
     else:
       lk = ""
     print(("<li>When prompted to do so by the lab instructions, you can SSH to your bastion host by opening a terminal and issuing the following command:<br><pre>$ ssh %s%s%s</pre></li>" % (lk, lu, bastion)))
-    if not linklight:
+    if not linklight and labUser == "lab-user":
       print("<li>Unless otherwise stated in the lab instructions, the password is: <pre><b>r3dh4t1!</b></pre></li>")
   else:
     #if urls != "None":

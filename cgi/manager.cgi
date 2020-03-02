@@ -178,7 +178,6 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     for st in serviceTemplatesAll.get('resources'):
       stName = st['name']
       stID = st['id']
-      #if stName != "Ansible F5 Automation Workshop" and stName != "Ansible Network Automation Workshop" and stName != "Ansible RH Enterprise Linux Automation":
       catID = st['service_template_catalog_id']
       catalogItems[stID] = {}
       catalogItems[stID]['catid'] = catID
@@ -220,6 +219,8 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     for catName, ci in sorted(catalogs.items(), key=lambda x: x[1], reverse=False):
       print ("'%s': [" % catName)
       for catItem in sorted(ci):
+        if catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation" or catItem == "OCP and Container Storage for Admins":
+          continue
         print ("'%s'," % catItem )
       print ( "]," )
     print ("}")
@@ -312,7 +313,7 @@ tr.brd{
     print ("""
 		) {
                         showAgnosticDshared();
-	  		document.getElementById('servicetype-AgnosticDshared').checked = true;
+	  		/* document.getElementById('servicetype-AgnosticDshared').checked = true; */
 		} else if (
 """)
     for mItem in dedItems:
@@ -323,14 +324,16 @@ tr.brd{
     print ("""
 		) {
                         showAgnosticD();
-	  		document.getElementById('servicetype-AgnosticD').checked = true;
+	  		/* document.getElementById('servicetype-AgnosticD').checked = true; */
 		} else {
                         showRavello();
-	  		document.getElementById('servicetype-Ravello').checked = true;
+	  		/* document.getElementById('servicetype-Ravello').checked = true; */
 		}
 	}
 </script>
 """)
+
+  print ("<center>>>>><font color=red>%s</font><<<<</center>" % serviceType)
   print ('<form id="myform" method="post" action="%s?operation=%s%s">' % (myurl, operation, imp) )
   print ("<center><table width=60% border=0>")
   if operation == 'create_lab':
@@ -394,27 +397,27 @@ tr.brd{
   agdm = ""
   upc = ""
   if serviceType == 'agnosticd':
-    agdc = "checked='checked'"
+    agdc = "checked"
   elif serviceType == 'agnosticd-shared':
-    agsc = "checked='checked'"
+    agsc = "checked"
   elif serviceType == 'agnosticd-nosandbox':
-    agns = "checked='checked'"
+    agns = "checked"
   elif serviceType == 'agnosticd-multi':
-    agdm = "checked='checked'"
+    agdm = "checked"
   elif serviceType == 'user-password':
-    upc = "checked='checked'"
+    upc = "checked"
   else:
-    ravc = "checked='checked'"
+    ravc = "checked"
     serviceType = "ravello"
   print ("""
-<input type="radio" id="servicetype-Ravello" name="servicetype" %s value="ravello" onclick="showRavello()"/>&nbsp;Ravello&nbsp;|&nbsp;
-<input type="radio" id="servicetype-AgnosticD" name="servicetype" %s value="agnosticd" onclick="showAgnosticD()"/>&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
-<input type="radio" id="servicetype-AgnosticDshared" name="servicetype" %s value="agnosticd-shared" onclick="showAgnosticDshared()"/>AgnosticD Shared
-<input type="radio" id="servicetype-AgnosticDnosandbox" name="servicetype" %s value="agnosticd-nosandbox" onclick="showAgnosticD()"/>AgnosticD No Sandbox 
-<input type="radio" id="servicetype-AgnosticDmulti" name="servicetype" %s value="agnosticd-multi" onclick="showAgnosticD()"/>AgnosticD Multi 
+<input type="radio" id="servicetype-Ravello" name="servicetype" value="ravello" onclick="showRavello()" %s >&nbsp;Ravello&nbsp;|&nbsp;
+<input type="radio" id="servicetype-AgnosticD" name="servicetype" value="agnosticd" onclick="showAgnosticD()" %s >&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
+<input type="radio" id="servicetype-AgnosticDshared" name="servicetype" value="agnosticd-shared" onclick="showAgnosticDshared()" %s >AgnosticD Shared
+<input type="radio" id="servicetype-AgnosticDnosandbox" name="servicetype" value="agnosticd-nosandbox" onclick="showAgnosticD()" %s >AgnosticD No Sandbox 
+<input type="radio" id="servicetype-AgnosticDmulti" name="servicetype" value="agnosticd-multi" onclick="showAgnosticD()" %s >AgnosticD Multi 
 """ % (ravc,agdc,agsc,agns,agdm))
   print ("""
-&nbsp;|&nbsp;<input type="radio" id="servicetype-UserPassword" name="servicetype" %s value="user-password" onclick="showUserPassword()"/>User/Password
+&nbsp;|&nbsp;<input type="radio" id="servicetype-UserPassword" name="servicetype" value="user-password" onclick="showUserPassword()" %s >User/Password
 """ % (upc))
   print ("</td></tr>")
   print("</tbody>")
@@ -488,9 +491,20 @@ tr.brd{
     print ("window.onload = setType('%s');" % catitem)
   print ("</script>")
   if catname != "":
-    print ("<script>")
-    print ("window.onload = createOption(document.getElementById('catitems'), '%s', '%s', true);" % (catitem, catitem))
-    print ("</script>")
+    #print ("<script>")
+    #print ("window.onload = createOption(document.getElementById('catitems'), '%s', '%s', true);" % (catitem, catitem))
+    #print ("</script>")
+    print ("""<script>
+var ci = "%s";
+var ciSelect = document.getElementById('catitems');
+
+for(var i, j = 0; i = ciSelect.options[j]; j++) {
+    if(i.value == ci ) {
+        ciSelect.selectedIndex = j;
+        break;
+    }
+}
+    </script>""" % catitem )
   if serviceType == "agnosticd" or serviceType == "agnosticd-nosandbox" or serviceType == "agnosticd-multi":
     print ("<script>document.getElementById('agnosticd').style.display='table-row-group';</script>")
   elif serviceType == "agnosticd-shared":
@@ -1312,26 +1326,31 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         printfooter()
         exit()
       cfpass = form.getvalue('cfpass')
+      max_instances = 55
     else:
       config = configparser.ConfigParser()
       config.read(cfgfile)
       cfpass = config.get('spp-credentials', 'shared-password')
+      max_instances = 90
     if not re.match("^[0-9]+$", num_instances):
       printheader()
-      prerror("ERROR: Number of instances must be a valid number <= 55.")
+      prerror("ERROR: Number of instances must be a valid number <= %s." % str(max_instances))
       printback()
       printfooter()
       exit()
-    if int(num_instances) < 1 or int(num_instances) > 55:
+    if int(num_instances) < 1 or int(num_instances) > max_instances:
       printheader()
-      prerror("ERROR: Number of instances must be a positive number <= 55.")
+      prerror("ERROR: Number of instances must be a positive number <= %s you requested %s." % (str(max_instances), str(num_instances)))
       printback()
       printfooter()
       exit()
     printheader()
-    print ("Attempting to deploy <b>%s</b> instances of <b>%s/%s</b> in environment <b>%s</b>.<br><pre>" % (num_instances, catName, catItem, environment) )
     ordersvc = ggbin + "order_svc.sh"
-    settings = "check=t;check2=t;runtime=8;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (labCode, city, salesforce)
+    if spp:
+      rt = "12"
+    else:
+      rt = "12"
+    settings = "check=t;check2=t;runtime=%s;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (rt, labCode, city, salesforce)
     if spp:
       if serviceType == "ravello":
         settings = settings + ";autostart=t;noemail=t;pwauth=t"
@@ -1349,7 +1368,13 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     if region == "" or region == "None":
       region = "na"
     if spp:
-      if serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
+      if serviceType == "ravello":
+        if bareMetal == "t":
+          region = region + "_baremetal"
+        elif bareMetal == "g":
+          region = region + "_gce"
+        settings = "%s;region=%s" % (settings, region)
+      elif serviceType == "agnosticd-shared" or serviceType == "agnosticd-nosandbox":
         settings = "%s;region=%s" % (settings, region)
       elif serviceType == "agnosticd" or serviceType == "agnosticd-multi":
         settings = "%s;region=%s_sandboxes_gpte" % (settings, region)
@@ -1361,7 +1386,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       #print ("DEBUG: Catalog Item Dialog In Matrix Is: " + mDialog.lower())
       if 'sandbox' in mDialog.lower():
         settings = "%s;region=%s_sandbox_gpte" % (settings, region)
-      elif 'openshift shared summit' in mDialog.lower():
+      elif 'openshift shared summit' in mDialog.lower() or 'ocp4 workshop' in mDialog.lower():
         settings = "%s;region=%s_gpte" % (settings, region)
       elif 'dev ocp4 openshift bu' in mDialog.lower():
         settings = "%s;region=dev_%s_openshiftbu" % (settings, region)
@@ -1381,7 +1406,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         settings = "%s;users=%s" % (settings, shared)
     else:
       settings = settings + ";users=1"
+    print ("Attempting to deploy <b>%s</b> instances of <b>%s/%s</b> in environment <b>%s</b> in region <b>%s</b>.<br><pre>" % (num_instances, catName, catItem, environment, region) )
     #print ( "DEBUG: %s" % (settings))
+    #print ( "DEBUG: %s" % (cfpass))
     execute([ordersvc, "-w", envirURL, "-u", profile, "-P", cfpass, "-c", catName, "-i", catItem, "-t", num_instances, "-n", "-d", settings])
     print ("</pre>" )
     if serviceType == "ravello":
