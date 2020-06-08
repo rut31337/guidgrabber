@@ -609,6 +609,7 @@ if operation == "none":
       print ("<tr><td style='font-size: .8em;'><a href=%s?operation=update_guids%s>Update Available Lab GUIDs</a></td></tr>" % (myurl, imp) )
       print ("<tr><td style='font-size: .8em;'><a href=%s?operation=delete_instance%s>Delete Lab Instances</a></td></tr>" % (myurl, imp) )
     print ("<tr><td style='font-size: .8em;'><a href=%s?operation=choose_lab%s>Manage Lab</a></td></tr>" % (myurl, imp) )
+    print ("<tr><td style='font-size: .8em;'><a href=%s?operation=choose_view_lab%s>Lab Build Status</a></td></tr>" % (myurl, imp) )
     if not spp:
       print ("<tr><td style='font-size: .8em;'><a href=%s?operation=delete_lab%s>Delete Lab Configuration</a></td></tr>" % (myurl, imp) )
   print ('</table></td>')
@@ -629,7 +630,25 @@ elif operation == "create_new_lab_form":
   printform('create_new_lab')
   printfooter()
   exit()
-elif operation == "choose_lab" or operation == "edit_lab" or operation == "delete_lab" or operation == "update_guids" or operation == "deploy_lab" or operation == "delete_instance":
+elif operation == "show_services":
+  labCode = form.getvalue('labcode')
+  if not (re.match("^[a-zA-Z0-9]+$", labCode)):
+    printheader()
+    prerror("ERROR: Lab code any only be alphanumeric.")
+    printback()
+    printfooter()
+    exit()
+  printheader()
+  config = configparser.ConfigParser()
+  config.read(cfgfile)
+  cfuser = config.get('cloudforms-credentials', 'user')
+  cfpass = config.get('cloudforms-credentials', 'password')
+  envirURL = "https://rhpds.redhat.com"
+  showservices = ggbin + "show_services.py"
+  execute([showservices, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--ufilter", profile, "--labcode", labCode])
+  printfooter()
+  exit()
+elif operation == "choose_view_lab" or operation == "choose_lab" or operation == "edit_lab" or operation == "delete_lab" or operation == "update_guids" or operation == "deploy_lab" or operation == "delete_instance":
   printheader()
   print ("<center><table border=0>" )
   if 'msg' in form:
@@ -637,6 +656,9 @@ elif operation == "choose_lab" or operation == "edit_lab" or operation == "delet
   if operation == "choose_lab":
     op = "<b>view</b>"
     op2 = "checklc"
+  elif operation == "choose_view_lab":
+    op = "<b>view status</b>"
+    op2 = "show_services"
   elif operation == "delete_lab":
     op = "<b>delete <font color=red>(Danger, unrecoverable operation!)</font></b>"
     op2 = "dellc"
@@ -1350,7 +1372,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       rt = "12"
     else:
       rt = "12"
-    settings = "check=t;check2=t;runtime=%s;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (rt, labCode, city, salesforce)
+    settings = "status=t;check=t;check2=t;runtime=%s;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (rt, labCode, city, salesforce)
     if spp:
       if serviceType == "ravello":
         settings = settings + ";autostart=t;noemail=t;pwauth=t"
@@ -1384,7 +1406,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     else:
       mType, mCloud, mDialog = getMatrix(catName, catItem)
       #print ("DEBUG: Catalog Item Dialog In Matrix Is: " + mDialog.lower())
-      if 'sandbox' in mDialog.lower():
+      if mCloud == "Novello":
+        settings = "%s;region=%s_osp" % (settings, region)
+      elif 'sandbox' in mDialog.lower():
         settings = "%s;region=%s_sandbox_gpte" % (settings, region)
       elif 'openshift shared summit' in mDialog.lower() or 'ocp4 workshop' in mDialog.lower():
         settings = "%s;region=%s_gpte" % (settings, region)
@@ -1421,7 +1445,8 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       waittime = "5"
     now = datetime.datetime.utcnow()
     now = str(now.strftime("%Y-%m-%d %H:%M"))
-    print ("<br>If deployment started successfully, please wait at least %s minutes from %s UTC for complete deployment and GUID generation.<br>At that time you can click <a href=%s?operation=update_guids%s>here</a> or use <b>Update Available Lab GUIDs</b> from the main menu to update the available GUID database.<br><center>" % (waittime, now, myurl, imp) )
+    print ("<br>If deployment started successfully, please wait at least %s minutes from %s UTC for complete deployment and GUID generation.<br>At that time you can click <a href=%s?operation=update_guids%s>here</a> or use <b>Update Available Lab GUIDs</b> from the main menu to update the available GUID database.<br>" % (waittime, now, myurl, imp) )
+    print ("<br>Click <a href=%s?operation=show_services&labcode=%s%s target=_blank>here</a> to open a service build status page.<br><center>" % (myurl, labCode, imp) )
     printfooter()
     exit()
   elif operation == "delete_instances":
