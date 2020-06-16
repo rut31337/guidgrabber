@@ -392,12 +392,15 @@ tr.brd{
   print ("<tbody class=tbg><tr><td align=right style='width:40%%; font-size: 0.6em;'><b>Service Type*:</b></td><td align=left style='width:40%%; font-size: 0.6em;'>")
   ravc = ""
   agdc = ""
+  agdb = ""
   agsc = ""
   agns = ""
   agdm = ""
   upc = ""
   if serviceType == 'agnosticd':
     agdc = "checked"
+  elif serviceType == 'agnosticd-bookbag':
+    agdb = "checked"
   elif serviceType == 'agnosticd-shared':
     agsc = "checked"
   elif serviceType == 'agnosticd-nosandbox':
@@ -412,10 +415,11 @@ tr.brd{
   print ("""
 <input type="radio" id="servicetype-Ravello" name="servicetype" value="ravello" onclick="showRavello()" %s >&nbsp;Ravello&nbsp;|&nbsp;
 <input type="radio" id="servicetype-AgnosticD" name="servicetype" value="agnosticd" onclick="showAgnosticD()" %s >&nbsp;AgnosticD Dedicated&nbsp;|&nbsp;
+<input type="radio" id="servicetype-AgnosticDbookbag" name="servicetype" value="agnosticd-bookbag" onclick="showAgnosticD()" %s >&nbsp;AgnosticD Bookbag&nbsp;|&nbsp;
 <input type="radio" id="servicetype-AgnosticDshared" name="servicetype" value="agnosticd-shared" onclick="showAgnosticDshared()" %s >AgnosticD Shared
 <input type="radio" id="servicetype-AgnosticDnosandbox" name="servicetype" value="agnosticd-nosandbox" onclick="showAgnosticD()" %s >AgnosticD No Sandbox 
 <input type="radio" id="servicetype-AgnosticDmulti" name="servicetype" value="agnosticd-multi" onclick="showAgnosticD()" %s >AgnosticD Multi 
-""" % (ravc,agdc,agsc,agns,agdm))
+""" % (ravc,agdc,agdb,agsc,agns,agdm))
   print ("""
 &nbsp;|&nbsp;<input type="radio" id="servicetype-UserPassword" name="servicetype" value="user-password" onclick="showUserPassword()" %s >User/Password
 """ % (upc))
@@ -646,6 +650,8 @@ elif operation == "show_services":
   envirURL = "https://rhpds.redhat.com"
   showservices = ggbin + "show_services.py"
   execute([showservices, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--ufilter", profile, "--labcode", labCode])
+  print ("<center>NOTE: You must manually refresh this page</center>")
+  print ("<button class='w3-btn w3-white w3-border w3-padding-small' onclick=\"history.go(0)\" type=button>Refresh</button>" )
   printfooter()
   exit()
 elif operation == "choose_view_lab" or operation == "choose_lab" or operation == "edit_lab" or operation == "delete_lab" or operation == "update_guids" or operation == "deploy_lab" or operation == "delete_instance":
@@ -1216,6 +1222,11 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         if serviceType == "agnosticd-shared" or serviceType == "user-password":
           if 'shared' in row and row['shared'] is not None and row['shared'] != "None":
             shared = row['shared']
+        if operation == "get_guids" and serviceType == "agnosticd-bookbag":
+          printheader()
+          prerror("Bookbag deployments automatically update GUIDs when deployed.  This step is not necessary.")
+          printfooter()
+          exit()
         break
   if catName == "" or catItem == "":
     printheader()
@@ -1268,11 +1279,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       else:
         cfuser = config.get('cloudforms-credentials', 'user')
         cfpass = config.get('cloudforms-credentials', 'password')
-      if spp:
-        command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly", "--labcode", labCode]
-      else:
-        command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly"]
-        #command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--labcode", labCode]
+      command = [getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", "/dev/null", "--ufilter", profile, "--guidonly", "--labcode", labCode]
       #print (command)
       out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       stdout,stderr = out.communicate()
@@ -1310,10 +1317,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
         cfuser = config.get('cloudforms-credentials', 'user')
         cfpass = config.get('cloudforms-credentials', 'password')
       #print ("DEBUG: %s --cfurl %s --cfuser %s --cfpass %s --catalog %s --item %s --out %s --ufilter %s" % (getguids, envirURL, cfuser, cfpass, catName, catItem, allGuidsCSV, profile))
-      if spp:
-        execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode])
-      else:
-        execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile])
+      execute([getguids, "--cfurl", envirURL, "--cfuser", cfuser, "--cfpass", cfpass, "--catalog", catName, "--item", catItem, "--out", allGuidsCSV, "--ufilter", profile, "--labcode", labCode])
       print ("</pre>" )
       if not os.path.exists(allGuidsCSV):
         prerror("ERROR: Updating GUIDs failed in environment <b>%s</b>." % (environment))
@@ -1406,7 +1410,9 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     else:
       mType, mCloud, mDialog = getMatrix(catName, catItem)
       #print ("DEBUG: Catalog Item Dialog In Matrix Is: " + mDialog.lower())
-      if mCloud == "Novello":
+      if serviceType == "agnosticd-bookbag":
+        settings = "%s;region=tests" % (settings)
+      elif mCloud == "Novello":
         settings = "%s;region=%s_osp" % (settings, region)
       elif 'sandbox' in mDialog.lower():
         settings = "%s;region=%s_sandbox_gpte" % (settings, region)
@@ -1441,12 +1447,15 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       waittime = "50"
     elif serviceType == "agnosticd-shared":
       waittime = "10"
+    elif serviceType == "agnosticd-bookbag":
+      waittime = "20"
     else:
-      waittime = "5"
+      waittime = "60"
     now = datetime.datetime.utcnow()
     now = str(now.strftime("%Y-%m-%d %H:%M"))
-    print ("<br>If deployment started successfully, please wait at least %s minutes from %s UTC for complete deployment and GUID generation.<br>At that time you can click <a href=%s?operation=update_guids%s>here</a> or use <b>Update Available Lab GUIDs</b> from the main menu to update the available GUID database.<br>" % (waittime, now, myurl, imp) )
-    print ("<br>Click <a href=%s?operation=show_services&labcode=%s%s target=_blank>here</a> to open a service build status page.<br><center>" % (myurl, labCode, imp) )
+    print ("<br>If deployment started successfully, click <a href=%s?operation=show_services&labcode=%s%s target=_blank>here</a> to open the service build status page.<br>" % (myurl, labCode, imp) )
+    print ("<br>Watch the status of the services in the service build status page.  Do not update available GUIDs until all services have a status of <b>complete</b>.  It should take about %s minutes from %s UTC for all deployments to complete.<br>At that time you can click <a href=%s?operation=update_guids%s>here</a> or use <b>Update Available Lab GUIDs</b> from the main menu to update the available GUID database.<br>" % (waittime, now, myurl, imp) )
+    print ("<center>")
     printfooter()
     exit()
   elif operation == "delete_instances":
@@ -1461,10 +1470,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
     else:
       cfuser = config.get('cloudforms-credentials', 'user')
       cfpass = config.get('cloudforms-credentials', 'password')
-    if spp:
-      cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-l", labCode, "-n"]
-    else:
-      cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-n"]
+    cmd = [retiresvc, "-w", envirURL, "-u", cfuser, "-P", cfpass, "-f", profile, "-c", catName, "-i", catItem, "-l", labCode, "-n"]
     # DEBUG ONLY!
     #print (cmd)
     execute(cmd)

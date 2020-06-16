@@ -424,8 +424,8 @@ elif operation == "showguid":
     printback()
     printfooter()
     exit()
-  printheader(False, "", "", operation)
   if 'guid' not in form:
+    printheader(False, "", "", operation)
     print("Unexpected ERROR: no GUIDs found. Please contact lab assistant.")
     printback()
     printfooter()
@@ -471,6 +471,7 @@ elif operation == "showguid":
             guidType = 'user'
         break
   if not found:
+    printheader(False, "", "", operation)
     print("Unexpected ERROR: This lab no longer exists. Please contact lab assistant.<br>")
     print("Only if <b>directed by lab assistant</b> click this button: <button onclick='rusure()'>FORGET SESSION</button>")
     printback()
@@ -482,6 +483,7 @@ elif operation == "showguid":
   sharedGUID = ""
   allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
   if not os.path.exists(allGuidsCSV):
+    printheader(False, "", "", operation)
     print("ERROR, No guids for lab code <b>{0}</b> exist at this time.<br>".format(labCode))
     printback()
     printfooter()
@@ -498,7 +500,12 @@ elif operation == "showguid":
           sandboxZone = allrow['sandboxzone']
         if 'kubeadmin' in allrow and allrow['kubeadmin']:
           kubeadmin = allrow['kubeadmin']
+        if 'redirecturl' in allrow and allrow['redirecturl']:
+          redirectURL = allrow['redirecturl']
+          callredirect(redirectURL)
+          exit()
         break
+  printheader(False, "", "", operation)
   if linklight:
     labUser = guid
     bastion = sandboxZone
