@@ -4,6 +4,7 @@ import argparse
 import requests
 #import urllib
 import urllib.parse
+import subprocess
 
 import re
 from requests.auth import HTTPBasicAuth
@@ -57,7 +58,7 @@ def apicall(token, url, op, inp = None ):
   return obj.get('resources')
 
 f = open(outFile, 'w')
-f.write('"guid","appid","servicetype","sandboxzone","kubeadmin"\n')
+f.write('"guid","appid","servicetype","sandboxzone","kubeadmin","uuid","environmentinfo"\n')
 
 if itName != "N/A" and itName != "None" and itName != "":
   token = gettok()
@@ -143,6 +144,8 @@ if itName != "N/A" and itName != "None" and itName != "":
     thisha = ""
     thissession = ""
     account = ""
+    uuid = ""
+    environmentInfo = ""
     for cab in svc['custom_attributes']:
       if cab['name'] == 'GUID':
         guid = cab['value']
@@ -162,6 +165,11 @@ if itName != "N/A" and itName != "None" and itName != "":
         thissession = cab['value']
       if cab['name'] == 'HA':
         thisha = cab['value']
+      if cab['name'] == 'uuid':
+        uuid = cab['value']
+      if re.match(r'^Environment Info', cab['name']):
+        cab['value'].replace('"', '&quot;')
+        environmentInfo += "<li>" + cab['value'] + "</li>"
     if status != "complete":
       #print ("skipping")
       continue
@@ -194,7 +202,7 @@ if itName != "N/A" and itName != "None" and itName != "":
     else:
       ln = guid + "," + appID + "," + serviceType
     if ln != "":
-      ln = ln + "," + sandboxZone + "," + kubeadmin + "\n"
+      ln = ln + "," + sandboxZone + "," + kubeadmin + "," + uuid + ",\"" + environmentInfo + "\"\n"
       f.write(ln)
   #print ("Wrote file " + outFile)
 else:

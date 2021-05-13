@@ -17,7 +17,7 @@
                           <!-- Footnote Component -->
                           <div class="summit-footnote" data-summit-theme="dark">
                               <ul class="summit-footnote-container">
-                                  <li class="summit-footnote-item"><div id="link_bar"><a href="https://mojo.redhat.com/docs/DOC-1172529" target=_blank>Documentation</a></div></li>
+                                  <li class="summit-footnote-item"><div id="link_bar"><a href="https://source.redhat.com/departments/globalservices/gpte/redhatproductdemosystem/red_hat_product_demo_system_wiki/deploying_a_rhpds_based_demo_as_a_workshop_using_the_guidgrabber_tool" target=_blank>Documentation</a></div></li>
                               </ul>
                           </div>
                           <!-- Footnote Component -->

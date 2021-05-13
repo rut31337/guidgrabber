@@ -27,6 +27,8 @@ def getMatrix(catName, catItem):
       #print("DEBUG: Looking for catname " + catName)
       #print("DEBUG: Looking for catitem " + catItem)
       for row in matrix:
+        if row['Catalog'] == "" or row['Catalog Item'] == "":
+          continue
         if row['Catalog'] == catName and row['Catalog Item'] == catItem:
           if 'Type' in row:
             mType = row['Type']
@@ -209,8 +211,13 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
       with open(catalogMatrix, encoding='utf-8') as csvM:
         matrix = csv.DictReader(csvM)
         for row in matrix:
+          mDialog = row['Service Dialog']
+          if row['Catalog'] == "" or row['Catalog Item'] == "":
+            continue
           mCatalog = row['Catalog']
-          if 'testing' in mCatalog.lower() or 'development' in mCatalog.lower() or 'decommissioned' in mCatalog.lower() or 'utilities' in mCatalog.lower() or 'na channel workshops' in mCatalog.lower():
+          if 'testing' in mCatalog.lower() or 'development' in mCatalog.lower() or 'decommissioned' in mCatalog.lower() or 'utilities' in mCatalog.lower() or 'Workshop' in mCatalog:
+            continue
+          if 'multi' in mDialog.lower():
             continue
           mItem = row['Catalog Item']
           #if mCatalog not in catalogs:
@@ -219,7 +226,7 @@ def printform(operation="", labcode="", labname="", labkey="", bastion="", docur
     for catName, ci in sorted(catalogs.items(), key=lambda x: x[1], reverse=False):
       print ("'%s': [" % catName)
       for catItem in sorted(ci):
-        if catItem == "Ansible F5 Automation Workshop" or catItem == "Ansible Network Automation Workshop" or catItem == "Ansible RH Enterprise Linux Automation" or catItem == "OCP and Container Storage for Admins":
+        if catItem == "Ansible Security Automation" or re.match("^Ansible.*Workshop$", catItem) or re.match(".*Container Storage for Admins.*", catItem):
           continue
         print ("'%s'," % catItem )
       print ( "]," )
@@ -294,6 +301,8 @@ tr.brd{
       with open(catalogMatrix, encoding='utf-8') as csvM:
         matrix = csv.DictReader(csvM)
         for row in matrix:
+          if row['Catalog'] == "" or row['Catalog Item'] == "":
+            continue
           mDialog = row['Service Dialog']
           mItem = row['Catalog Item']
           if 'openshift shared summit' in mDialog.lower() or 'dev ocp4 openshift bu' in mDialog.lower() or 'openshift bu' in mDialog.lower() or 'ocp4 openshift bu' in mDialog.lower() or 'linklight' in mDialog.lower() or 'azure' in mDialog.lower() or 'for aro' in mDialog.lower():
@@ -1376,7 +1385,7 @@ elif operation == "get_guids" or operation == "deploy_labs" or operation == "del
       rt = "12"
     else:
       rt = "12"
-    settings = "status=t;check=t;check2=t;runtime=%s;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (rt, labCode, city, salesforce)
+    settings = "quotacheck=t;status=t;check=t;check2=t;runtime=%s;labCode=%s;city=%s;salesforce=%s;notes=Deployed_With_GuidGrabber" % (rt, labCode, city, salesforce)
     if spp:
       if serviceType == "ravello":
         settings = settings + ";autostart=t;noemail=t;pwauth=t"
@@ -1541,7 +1550,7 @@ elif operation == "lock_guid" or operation == "release_guid":
     execute(["/bin/sed", "-i", regex, assignedCSV], quiet=True)
   if operation == "lock_guid":
     if not os.path.exists(assignedCSV):
-      ln = '"guid","ipaddr"\n'
+      ln = '"guid","ipaddr","email"\n'
       with open(assignedCSV, "w", encoding='utf-8') as conffile:
         conffile.write(ln)
     ln = '"%s","locked"\n' % (guid)

@@ -338,11 +338,11 @@ elif operation == "searchguid":
     exit()
   assignedGuid = False
   #sleep(randint(1,5))
-  allGuids = {}
+  allGuids = []
   with open(allGuidsCSV, encoding='utf-8') as allfile:
     allf = csv.DictReader(allfile)
     for allrow in allf:
-      allGuids[allrow['guid']] = True
+      allGuids.append(allrow['guid'])
   ipfile = open(assignedCSV, encoding='utf-8')
   while True:
     try:
@@ -356,12 +356,12 @@ elif operation == "searchguid":
         time.sleep(0.1)
   foundGuid = ""
   iplocks = csv.DictReader(ipfile)
-  usedGuids = {}
+  usedGuids = []
   for row in iplocks:
-    usedGuids[row['guid']] = True
-  for g in allGuids:
-    if g not in usedGuids:
-      foundGuid = g
+    usedGuids.append(row['guid'])
+  for k in allGuids:
+    if k not in usedGuids:
+      foundGuid = k
       break
   if foundGuid != "":
     ipfile = open(assignedCSV, 'a', encoding='utf-8')
@@ -479,6 +479,7 @@ elif operation == "showguid":
     exit()
   sandboxZone = ""
   kubeadmin = ""
+  environmentInfo = ""
   appID = ""
   sharedGUID = ""
   allGuidsCSV = profileDir + "/availableguids-" + labCode + ".csv"
@@ -500,6 +501,8 @@ elif operation == "showguid":
           sandboxZone = allrow['sandboxzone']
         if 'kubeadmin' in allrow and allrow['kubeadmin']:
           kubeadmin = allrow['kubeadmin']
+        if 'environmentinfo' in allrow and allrow['environmentinfo']:
+          environmentInfo = allrow['environmentinfo']
         if 'redirecturl' in allrow and allrow['redirecturl']:
           redirectURL = allrow['redirecturl']
           callredirect(redirectURL)
@@ -564,6 +567,9 @@ elif operation == "showguid":
     if bastion != "" and bastion != "None":
       print(("<li>If lab requires the use of the SSH command it would look like this:<br><pre>ssh host-{0}.rhpds.opentlc.com</pre></li>".format(guid)))
     #print("<li><b>Note:</b>These are <b>just examples</b>, please consult the lab instructions for actual host names and URLs.</li>")
+  if environmentInfo != "":
+    print("<li>Please note the following information about your lab environment:</br>")
+    print("<ul>" + environmentInfo + "</ul>")
   if urls != "" and urls != "None":
     print("<li>The following URLs and information will be used in your lab environment. Please only access these links when the lab instructions specify to do so:<ul>")
     for u in urls.split(";"):
